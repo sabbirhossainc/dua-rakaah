@@ -1,20 +1,22 @@
 
 import Image from "next/image";
+import { Suspense } from "react";
+import LanguageToggle, { LanguageButtons } from "@/app/components/LanguageToggle";
 export default function RightBar() {
   return (
     
-      <div id="right-bar" className="overflow-hidden w-full 2xl:w-[270px] 3xl:w-[300px]">
-        <div className="bg-white w-full h-[76vh] lg:h-[calc(86vh)] xl:h-[92vh] 2xl:h-[86vh] 3xl:h-[96vh] rounded-3xl overscroll-y-contain scroll-smooth scroll-my-2 overflow-y-scroll scrollbar-width-thin pb-16 2xl:w-full 3xl:w-full">
+      <div id="right-bar" className="overflow-hidden w-full 2xl:w-[270px]">
+        <div className="bg-white w-full h-[76vh] lg:h-[calc(86vh)] xl:h-[92vh] 2xl:h-[86vh] rounded-3xl overscroll-y-contain scroll-smooth scroll-my-2 overflow-y-scroll scrollbar-width-thin pb-16 2xl:w-full">
           <div className="mt-8 pb-6">
             <p className="text-center text-2xl">
               Settings
             </p>
           </div>
-          <div className="xs:pb-4 sm:pb-4 w-full">
+          <div className="sm:pb-4 w-full">
             <div className="mx-4 my-4">
               <div className="border-x-devider border-x border-b border-solid border divide-[#cccdcf] rounded-lg">
                 <div className="">
-                  <div className="dark:bg-dark-bg-lite transition duration-300 delay-10 bg-dua-bg flex flex-row w-full rounded-lg">
+                  <div className="transition duration-300 delay-10 bg-dua-bg flex flex-row w-full rounded-lg">
                     <div className="bg-primary w-1 rounded-tl-lg rounded-bl-lg"></div>
                     <div className="p-2 flex flex-row items-center w-full cursor-pointer">
                       <div className="bg-icon-bg flex p-2 items-center rounded-full mr-5 justify-center">
@@ -26,7 +28,7 @@ export default function RightBar() {
                           height={24}
                         />
                       </div>
-                      <p className="text-primary font-medium text-start text-base leading-5 xs:text-sm lg-min:text-sm style-Kalpurush">
+                      <p className="text-primary font-medium text-start text-base leading-5 style-Kalpurush">
                         Language Settings
                       </p>
                     </div>
@@ -34,14 +36,10 @@ export default function RightBar() {
                 </div>
                 <div className="">
                   <div className="py-6 rounded-b-lg">
-                    <div className="flex flex-row gap-x-3 mx-4 justify-center">
-                      <button className="bg-primary text-white rounded-md w-29 h-10 text-ms xs:w-full sm:w-full">
-                        English
-                      </button>
-                      <button className="text-black border border-solid border-[#cccdcf] dark:border-none rounded-md w-29 h-10 text-ms xs:w-full sm:w-full">
-                        বাংলা
-                      </button>
-                    </div>
+                    {/* useSearchParams in the toggle needs a boundary on prerendered pages */}
+                    <Suspense fallback={<LanguageButtons active="en" />}>
+                      <LanguageToggle />
+                    </Suspense>
                   </div>
                 </div>
               </div>
@@ -61,7 +59,7 @@ export default function RightBar() {
                           height={24}
                         />
                       </div>
-                      <p className="text-mute-grey-200 dark:text-dark-text text-start text-base leading-5 xs:text-sm lg-min:text-sm style-Kalpurush">
+                      <p className="text-start text-base leading-5 style-Kalpurush">
                         General Settings
                       </p>
                     </div>
@@ -84,7 +82,7 @@ export default function RightBar() {
                           height={24}
                         />
                       </div>
-                      <p className="text-mute-grey-200 text-start text-base leading-5 xs:text-sm lg-min:text-sm style-Kalpurush">
+                      <p className="text-start text-base leading-5 style-Kalpurush">
                       Font Settings
                       </p>
                     </div>
@@ -95,7 +93,7 @@ export default function RightBar() {
             <div className="mx-4 my-4">
               <div className="">
                 <div className="cursor-pointer">
-                  <div className="bg-dua-bg flex flex-row w-full rounded-lg dark:bg-dark-bg-dark">
+                  <div className="bg-dua-bg flex flex-row w-full rounded-lg">
                     <div className="w-1 rounded-tl-lg rounded-bl-lg"></div>
                     <div className="p-2 flex flex-row items-center w-full">
                       <div className="bg-icon-bg flex p-2 items-center rounded-full mr-5 justify-center">
@@ -107,7 +105,7 @@ export default function RightBar() {
                           height={24}
                         />
                       </div>
-                      <p className="text-mute-grey-200 text-start text-base leading-5 xs:text-sm lg-min:text-sm style-Kalpurush">
+                      <p className="text-start text-base leading-5 style-Kalpurush">
                       Appearance Settings
                       </p>
                     </div>

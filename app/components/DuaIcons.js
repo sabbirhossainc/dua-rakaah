@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import BookmarkButton from "@/app/components/BookmarkButton";
 
-export default function DuaIcons() {
+// The bookmark icon is a real control. The other four are still placeholders.
+export default function DuaIcons({ duaId, lang = "en" }) {
   const data = [
     {
       id: "1",
@@ -35,10 +37,13 @@ export default function DuaIcons() {
     },
   ];
   return (
-    <div className="flex items-center flex-row justify-between py-6 gap-x-8 xs:gap-x-6">
-      {data.map((item) => (
+    <div className="flex items-center flex-row justify-between py-6 gap-x-8">
+      {data.map((item) =>
+        item.icon === "bookmarkd" ? (
+          <BookmarkButton key={item.id} duaId={duaId} lang={lang} />
+        ) : (
         <Link href={item.href} key={item.id}>
-          <div id={item.alt} className="relative w-6">
+          <div className="relative w-6">
             <Image
               className="cursor-pointer"
               src={`/icons/${item.icon}.svg`}
@@ -48,7 +53,8 @@ export default function DuaIcons() {
             />
           </div>
         </Link>
-      ))}
+        )
+      )}
     </div>
   );
 }

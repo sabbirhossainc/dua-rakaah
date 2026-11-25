@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-export default function RightBar() {
+import LocalizedLink from "@/app/components/LocalizedLink";
+export default function LeftBar() {
   const data = [
     {
       id: "1",
@@ -25,6 +26,7 @@ export default function RightBar() {
       icon: "bookmark",
       alt: "bookmark",
       href: "/bookmark",
+      hrefs: { en: "/bookmark", bn: "/bn/bookmark" },
     },
     {
       id: "5",
@@ -50,8 +52,8 @@ export default function RightBar() {
       id="left-bar"
       className="w-[100px] flex flex-col gap-y-6 fixed overflow-hidden"
     >
-      <div className="bg-white rounded-3xl px-4 lg:h-[calc(93vh)] xl:h-[94vh] 2xl:h-[93vh] 3xl:h-[93vh] overscroll-y-contain scroll-smooth scroll-my-2 overflow-y-scroll scrollbar-width-thin pb-16">
-        <div className="justify-center pt-7 mb-10 xl:mb-16 2xl:mb-16 3xl:mb-24 container">
+      <div className="bg-white rounded-3xl px-4 lg:h-[calc(93vh)] xl:h-[94vh] 2xl:h-[93vh] overscroll-y-contain scroll-smooth scroll-my-2 overflow-y-scroll scrollbar-width-thin pb-16">
+        <div className="justify-center pt-7 mb-10 xl:mb-16 2xl:mb-16 container">
           <Link href="/duas">
             <Image
               src="/icons/dua-logo.svg"
@@ -63,8 +65,11 @@ export default function RightBar() {
           </Link>
         </div>
         <div>
-          {data.map((link) => (
-            <Link href={link.href} key={link.id}>
+          {data.map((link) => {
+            const Anchor = link.hrefs ? LocalizedLink : Link;
+            const anchorProps = link.hrefs ? { hrefs: link.hrefs } : { href: link.href };
+            return (
+            <Anchor {...anchorProps} key={link.id}>
               <div className="justify-center items-center cursor-pointer my-2 flex flex-row w-full rounded-lg group">
                 <div className=" w-1 rounded-tl-lg rounded-bl-lg "></div>
                 <div className="p-2 flex flex-row justify-center items-center">
@@ -79,11 +84,12 @@ export default function RightBar() {
                   </div>
                 </div>
               </div>
-            </Link>
-          ))}
+            </Anchor>
+            );
+          })}
         </div>
         <div className="">
-          <div className="pt-6 xl:pt-16 2xl:pt-16 3xl:pt-24 pb-2 text-center">
+          <div className="pt-6 xl:pt-16 2xl:pt-16 pb-2 text-center">
             <Link href="/support">
               <div className="flex justify-center items-center mx-auto">
                 <button className="w-14 h-14 bg-primary drop-shadow-primary rounded-lg text-white text-sm">
