@@ -15,7 +15,7 @@ const LANGUAGES = [
 
 export default function OfflinePage() {
   return (
-    <div className="bg-white rounded-lg p-8 flex flex-col gap-8 items-center text-center">
+    <div className="bg-surface rounded-lg p-8 flex flex-col gap-8 items-center text-center">
       {LANGUAGES.map(({ lang, href }) => (
         <section key={lang} lang={lang} className="flex flex-col gap-2 items-center">
           <h1 className="text-xl font-semibold">{t(lang, "offlineTitle")}</h1>

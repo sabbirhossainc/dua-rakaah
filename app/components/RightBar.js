@@ -1,12 +1,14 @@
 
 import Image from "next/image";
 import { Suspense } from "react";
+import ArabicSizeSetting from "@/app/components/ArabicSizeSetting";
+import AppearanceSetting from "@/app/components/AppearanceSetting";
 import LanguageToggle, { LanguageButtons } from "@/app/components/LanguageToggle";
 export default function RightBar() {
   return (
     
       <div id="right-bar" className="overflow-hidden w-full 2xl:w-[270px]">
-        <div className="bg-white w-full h-[76vh] lg:h-[calc(86vh)] xl:h-[92vh] 2xl:h-[86vh] rounded-3xl overscroll-y-contain scroll-smooth scroll-my-2 overflow-y-scroll scrollbar-width-thin pb-16 2xl:w-full">
+        <div className="bg-surface w-full h-[76vh] lg:h-[calc(86vh)] xl:h-[92vh] 2xl:h-[86vh] rounded-3xl overscroll-y-contain scroll-smooth scroll-my-2 overflow-y-scroll scrollbar-width-thin pb-16 2xl:w-full">
           <div className="mt-8 pb-6">
             <p className="text-center text-2xl">
               Settings
@@ -14,7 +16,7 @@ export default function RightBar() {
           </div>
           <div className="sm:pb-4 w-full">
             <div className="mx-4 my-4">
-              <div className="border-x-devider border-x border-b border-solid border divide-[#cccdcf] rounded-lg">
+              <div className="border-x-devider border-x border-b border-solid border divide-line rounded-lg">
                 <div className="">
                   <div className="transition duration-300 delay-10 bg-dua-bg flex flex-row w-full rounded-lg">
                     <div className="bg-primary w-1 rounded-tl-lg rounded-bl-lg"></div>
@@ -88,6 +90,7 @@ export default function RightBar() {
                     </div>
                   </div>
                 </div>
+                <ArabicSizeSetting />
               </div>
             </div>
             <div className="mx-4 my-4">
@@ -111,6 +114,7 @@ export default function RightBar() {
                     </div>
                   </div>
                 </div>
+                <AppearanceSetting />
               </div>
             </div>
           </div>

@@ -15,7 +15,7 @@ export default function BookmarkButton({ duaId, lang }) {
       aria-label={t(lang, saved ? "unbookmark" : "bookmark")}
       title={t(lang, saved ? "unbookmark" : "bookmark")}
       onClick={() => toggle(duaId).catch((error) => console.error("Could not save the bookmark:", error))}
-      className={`relative w-6 cursor-pointer rounded ${saved ? "text-primary" : "text-[#868686]"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary`}
+      className={`relative w-6 cursor-pointer rounded ${saved ? "text-primary" : "text-muted"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary`}
     >
       <svg width="24" height="24" viewBox="0 0 28 28" fill={saved ? "currentColor" : "none"} aria-hidden="true">
         <path

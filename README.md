@@ -63,6 +63,7 @@ Open http://localhost:3000/duas.
 | `/duas/<slug>?cat=<id>` | One category, with its duas grouped by subcategory |
 | `/bn/duas`, `/bn/duas/<slug>?cat=<id>` | The same pages in Bangla |
 | `/bookmark`, `/bn/bookmark` | The reader's bookmarked duas (read from the browser, works offline) |
+| `/memorize`, `/bn/memorize` | The duas the reader has started memorizing, in progress and learned (read from the browser, works offline) |
 
 - `cat` decides which category is shown. The slug is only for readability: a wrong slug, or no `cat`, redirects
   (308) to the canonical URL, and an unknown category returns 404.
@@ -97,11 +98,34 @@ After one online visit, every page can be read with no network: the 20 category 
 
 ## User data and sync
 
-Bookmarks are saved on the reader's device first (IndexedDB, through Dexie), so they work offline and never wait
-for the network. A background sync copies them to one shared database (Turso, a hosted SQLite) through
-`POST /api/sync`, which lets the same bookmarks appear on every device after Google sign-in. Memorize and
-preferences will use the same sync later. The design is in `openspec/changes/archive/2026-11-25-add-user-data-sync/design.md`.
+Bookmarks, memorize progress and settings are saved on the reader's device first (IndexedDB, through Dexie), so they work
+offline and never wait for the network. A background sync copies them to one shared database (Turso, a hosted
+SQLite) through `POST /api/sync`, which lets the same data appear on every device after Google sign-in. The designs
+are in `openspec/changes/archive/2026-11-25-add-user-data-sync/design.md` (the sync, bookmarks),
+`openspec/changes/archive/2026-11-25-add-memorize/design.md` (memorize) and `openspec/changes/add-preferences/design.md`
+(settings).
 
+- **Settings.** The right bar (1536px and wider) has Font Settings (Arabic text size: small, medium, large, extra
+  large; medium is the original 28px) and Appearance Settings (light or dark). A choice applies at once, works
+  offline and follows the reader to every device after sign-in. There is also a stored `reciter_id` setting with no
+  control yet (the audio feature will use it). Three setting names exist: `theme`, `arabic_font`, `reciter_id`; they are
+  listed with their valid values in `lib/preferences.js`. Two devices that change the same setting keep the newest
+  change. **At sign-in the account's existing value wins**; the device's value is used only for a setting the account
+  does not have yet (a change with `if_absent: 1`). Sign-out returns the device to light and medium.
+- **No flash on dark.** Pages are saved static HTML, so the server cannot know the theme. A small inline script in
+  `<head>` (built in `lib/preferences.js`) sets `data-theme` and `--arabic-size` from a copy in
+  `localStorage["dua-prefs"]` before the first paint. The copy only holds the theme and the size, is a cache, and
+  IndexedDB wins once it has been read (`PreferencesApplier`).
+- **Key field.** A record's key is named by its type: `dua_id` for bookmarks and memorize, `pref_key` for settings.
+
+- **Memorize.** Every dua card has a memorize control (the third icon). It opens a panel with a "learned" checkbox
+  and five progress steps (0, 25, 50, 75, 100). `/memorize` lists what the reader has started. Two devices that
+  change the same dua keep the **further progress**; going backwards on purpose (un-ticking, lowering, starting over)
+  is a reset that wins over older progress on every device (`reset_gen`).
+- **Record types.** The sync carries more than one kind of record (`bookmark`, `memorize`, `preference`), described once in
+  `lib/sync/records.js`. A request names the types the device understands in an optional `types` list; without it the
+  server sends bookmarks only, so a browser still running older code is never sent rows it cannot store. A device that
+  starts to understand a new type pulls everything once.
 - **Anonymous first.** A device gets a random ID on first load and works with no sign-in. The server binds the
   browser to that ID with a signed, HTTP-only cookie (`dua_anon`) at the first sync.
 - **Sign-in** (Google, through Auth.js with JWT sessions) merges the device's bookmarks into the account. The app
@@ -131,7 +155,12 @@ npm run build && npm start -- -p 3100
 ```
 
 For a hosted database, create it in Turso, put its URL and token in the environment, and run
-`npm run db:user:init` once. `npm test` includes the convergence test: several simulated devices make random
+`npm run db:user:init` once. **When a release adds a table (memorize added `memorize`, settings added `preferences`), run `npm run db:user:init`
+against the hosted database *before* deploying the new build**: it only adds tables, so the old build is not
+affected, but the new build's sync fails (503, bookmarks included) until the table exists. Roll back by deploying the
+previous build: the extra table stays unused, and local databases already at Dexie version 3 still open with the
+previous code (checked with `fake-indexeddb`), but a device with memorize or setting changes still queued cannot sync until the
+new build returns. `npm test` includes the convergence test: several simulated devices make random
 changes over a network that drops, delays and repeats requests, and all of them must end with the server's data
 (200 random schedules, about 30 seconds). Set `CONVERGENCE_SEEDS` and `CONVERGENCE_FIRST_SEED` to run fewer or to
 replay one. Sign-in with Google itself needs real credentials and has to be checked by hand.

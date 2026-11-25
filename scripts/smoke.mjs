@@ -232,10 +232,15 @@ for (const p of ["/", "/duas", "/bn/duas", "/support", "/duas/sleep?cat=6"]) {
 const favicon = await fetch(BASE + "/icons/dua-logo.svg");
 check("favicon file is served", favicon.status === 200, String(favicon.status));
 
-// ---- bookmark pages ----
+// ---- bookmark and memorize pages (per-reader data, static, carrying the title index) ----
 {
   const titleOf = (id, col) => db.prepare(`SELECT ${col} AS t FROM dua WHERE id = ? AND ${col} IS NOT NULL AND trim(${col}) <> '' ORDER BY rowid LIMIT 1`).get(id)?.t;
-  for (const [path, lang, col, heading] of [["/bookmark", "en", "dua_name_en", "Bookmarks"], ["/bn/bookmark", "bn", "dua_name_bn", "বুকমার্ক"]]) {
+  for (const [path, lang, col, heading] of [
+    ["/bookmark", "en", "dua_name_en", "Bookmarks"],
+    ["/bn/bookmark", "bn", "dua_name_bn", "বুকমার্ক"],
+    ["/memorize", "en", "dua_name_en", "Memorize"],
+    ["/bn/memorize", "bn", "dua_name_bn", "মুখস্থ"],
+  ]) {
     const res = await get(path);
     check(`${path}: 200`, res.status === 200, `status ${res.status}`);
     check(`${path}: noindex`, /name="robots" content="noindex/.test(res.body));
@@ -264,7 +269,7 @@ check("favicon file is served", favicon.status === 200, String(favicon.status));
   check("/serwist/sw.js: never cached by the browser", /no-cache/.test(cc) && /no-store/.test(cc), cc);
 
   const entryUrls = [...worker.matchAll(/\{(?:url:"([^"]+)",revision:[^}]+|revision:[^,}]+,url:"([^"]+)")\}/g)].map((m) => m[1] ?? m[2]);
-  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/support", "/offline", "/bookmark", "/bn/bookmark"];
+  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize"];
   const missing = expectedPages.filter((u) => !entryUrls.includes(u));
   check(`worker precaches all ${expectedPages.length} pages (category pages come from the database)`, missing.length === 0, `missing: ${missing.join(" ")}`);
   check("worker precaches no audio and no /api/ URL", !entryUrls.some((u) => /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|weba)(\?|$)/i.test(u) || u.startsWith("/api/")));
@@ -300,6 +305,59 @@ check("favicon file is served", favicon.status === 200, String(favicon.status));
   check("POST /api/sync: sets an HTTP-only signed cookie", /^dua_anon=/.test(setCookie) && /HttpOnly/.test(setCookie), setCookie);
   const guess = await post({ anon_id: anon, cursor: 0, ops: [] });
   check("POST /api/sync: an identifier used by another reader is 403 without its cookie", guess.status === 403, `status ${guess.status}`);
+
+  // Memorize records: accepted, returned only to a request that names the type, validated (data-sync spec).
+  const memAnon = crypto.randomUUID();
+  const memChange = (fields) => ({ op_id: crypto.randomUUID(), type: "memorize", dua_id: 4, fields, client_ts: Date.now() });
+  const mem = await post({
+    anon_id: memAnon,
+    cursor: 0,
+    ops: [memChange({ learned: 0, progress: 50, reset_gen: 0 })],
+    types: ["bookmark", "memorize"],
+  });
+  const memBody = await mem.json().catch(() => ({}));
+  check("POST /api/sync: a memorize change is 200 and comes back with its type", mem.status === 200 && memBody.rows?.length === 1 && memBody.rows[0].type === "memorize" && memBody.rows[0].progress === 50, `status ${mem.status} ${JSON.stringify(memBody)}`);
+  const memCookie = (mem.headers.get("set-cookie") ?? "").split(";")[0];
+  const again = async (extra) => {
+    const res = await fetch(BASE + "/api/sync", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: memCookie },
+      body: JSON.stringify({ anon_id: memAnon, cursor: 0, ops: [], ...extra }),
+    });
+    return { status: res.status, body: await res.json().catch(() => ({})) };
+  };
+  const withoutTypes = await again({});
+  check("POST /api/sync: a request that names no types gets no memorize row", withoutTypes.status === 200 && withoutTypes.body.rows.every((r) => r.type !== "memorize"), JSON.stringify(withoutTypes.body));
+  const withTypes = await again({ types: ["memorize"] });
+  check("POST /api/sync: a request that names memorize gets it", withTypes.status === 200 && withTypes.body.rows.length === 1 && withTypes.body.rows[0].progress === 50, JSON.stringify(withTypes.body));
+  for (const fields of [{ learned: 0, progress: 101, reset_gen: 0 }, { learned: 2, progress: 50, reset_gen: 0 }, { learned: 0, progress: 50, reset_gen: -1 }]) {
+    const res = await post({ anon_id: crypto.randomUUID(), cursor: 0, ops: [memChange(fields)] });
+    check(`POST /api/sync: memorize ${JSON.stringify(fields)} is 400`, res.status === 400, `status ${res.status}`);
+  }
+
+  // Settings: accepted, returned only to a request that names the type, validated (data-sync spec).
+  const prefAnon = crypto.randomUUID();
+  const prefChange = (name, value) => ({ op_id: crypto.randomUUID(), type: "preference", pref_key: name, fields: { value, if_absent: 0 }, client_ts: Date.now() });
+  const pref = await post({ anon_id: prefAnon, cursor: 0, ops: [prefChange("theme", "dark")], types: ["bookmark", "memorize", "preference"] });
+  const prefBody = await pref.json().catch(() => ({}));
+  check("POST /api/sync: a setting change is 200 and comes back with its pref_key", pref.status === 200 && prefBody.rows?.length === 1 && prefBody.rows[0].type === "preference" && prefBody.rows[0].pref_key === "theme" && prefBody.rows[0].value === "dark", `status ${pref.status} ${JSON.stringify(prefBody)}`);
+  const prefCookie = (pref.headers.get("set-cookie") ?? "").split(";")[0];
+  const prefAgain = async (extra) => {
+    const res = await fetch(BASE + "/api/sync", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: prefCookie },
+      body: JSON.stringify({ anon_id: prefAnon, cursor: 0, ops: [], ...extra }),
+    });
+    return { status: res.status, body: await res.json().catch(() => ({})) };
+  };
+  const prefWithout = await prefAgain({});
+  check("POST /api/sync: a request that names no types gets no setting row", prefWithout.status === 200 && prefWithout.body.rows.every((r) => r.type !== "preference"), JSON.stringify(prefWithout.body));
+  const prefWith = await prefAgain({ types: ["preference"] });
+  check("POST /api/sync: a request that names preference gets it", prefWith.status === 200 && prefWith.body.rows.length === 1 && prefWith.body.rows[0].pref_key === "theme", JSON.stringify(prefWith.body));
+  for (const [name, value] of [["theme", "blue"], ["not_a_setting", "dark"], ["arabic_font", "huge"]]) {
+    const res = await post({ anon_id: crypto.randomUUID(), cursor: 0, ops: [prefChange(name, value)] });
+    check(`POST /api/sync: setting ${name}=${value} is 400`, res.status === 400, `status ${res.status}`);
+  }
 
   const providers = await get("/api/auth/providers");
   check("/api/auth/providers: 200 and lists Google", providers.status === 200 && providers.body.includes("google"), `status ${providers.status}`);

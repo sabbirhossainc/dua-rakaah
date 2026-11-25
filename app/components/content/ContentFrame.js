@@ -5,7 +5,7 @@ import Category from "@/app/components/Category";
 export default function ContentFrame({ lang, children }) {
   return (
     <div lang={lang} className="grid grid-cols-8">
-      <div className="fixed h-[85.5vh] z-0 lg:top-[134px] lg:w-[350px] xl:w-[350px] 2xl:w-[350px] overflow-hidden rounded-2xl sm:hidden md:block sm:h-screen lg:h-[74vh] bg-white">
+      <div className="fixed h-[85.5vh] z-0 lg:top-[134px] lg:w-[350px] xl:w-[350px] 2xl:w-[350px] overflow-hidden rounded-2xl sm:hidden md:block sm:h-screen lg:h-[74vh] bg-surface">
         <Category lang={lang} />
       </div>
       <div

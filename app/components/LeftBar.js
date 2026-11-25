@@ -20,6 +20,7 @@ export default function LeftBar() {
       icon: "memorize",
       alt: "memorize",
       href: "/memorize",
+      hrefs: { en: "/memorize", bn: "/bn/memorize" },
     },
     {
       id: "4",
@@ -52,7 +53,7 @@ export default function LeftBar() {
       id="left-bar"
       className="w-[100px] flex flex-col gap-y-6 fixed overflow-hidden"
     >
-      <div className="bg-white rounded-3xl px-4 lg:h-[calc(93vh)] xl:h-[94vh] 2xl:h-[93vh] overscroll-y-contain scroll-smooth scroll-my-2 overflow-y-scroll scrollbar-width-thin pb-16">
+      <div className="bg-surface rounded-3xl px-4 lg:h-[calc(93vh)] xl:h-[94vh] 2xl:h-[93vh] overscroll-y-contain scroll-smooth scroll-my-2 overflow-y-scroll scrollbar-width-thin pb-16">
         <div className="justify-center pt-7 mb-10 xl:mb-16 2xl:mb-16 container">
           <Link href="/duas">
             <Image

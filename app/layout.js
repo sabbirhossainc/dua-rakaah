@@ -4,6 +4,8 @@ import RightBar from "@/app/components/RightBar";
 import LeftBar from "@/app/components/LeftBar";
 import PwaProvider from "@/app/components/PwaProvider";
 import SyncStarter from "@/app/components/SyncStarter";
+import PreferencesApplier from "@/app/components/PreferencesApplier";
+import { inlineScriptText } from "@/lib/preferences";
 import "./globals.css";
 
 const inter = Inter({
@@ -26,10 +28,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className="bg-[#ebeef2] relative">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Applies the saved theme and Arabic size before the first paint (design D5). */}
+        <script dangerouslySetInnerHTML={{ __html: inlineScriptText() }} />
+      </head>
+      <body className="bg-page relative">
         <PwaProvider>
           <SyncStarter />
+          <PreferencesApplier />
           <div
             className={`${inter.variable} z-0 lg:fixed lg:inset-x-0 xl:fixed xl:inset-x-0 xl:p-6 xl:pb-0 2xl:px-10 2xl:pt-6 2xl:fixed 2xl:inset-x-0`}
           >

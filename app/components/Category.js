@@ -25,7 +25,7 @@ export default function Category({ lang }) {
             </span>
             <input
               id="filterted_catList"
-              className="h-12 placeholder:text-sm border block bg-white w-full rounded-md pl-12 shadow-xs focus:outline-hidden focus:border-primary focus:ring-primary focus:ring-1 sm:text-sm"
+              className="h-12 placeholder:text-sm border block bg-surface w-full rounded-md pl-12 shadow-xs focus:outline-hidden focus:border-primary focus:ring-primary focus:ring-1 sm:text-sm"
               placeholder={t(lang, "searchCategories")}
               aria-label={t(lang, "searchCategories")}
               type="text"
@@ -45,7 +45,7 @@ export default function Category({ lang }) {
                     key={cats.cat_id}
                   >
                     <Link href={categoryHref(cats, lang)}>
-                      <div className="cursor-pointer bg-white flex justify-between items-center mx-3  my-2">
+                      <div className="cursor-pointer bg-surface flex justify-between items-center mx-3  my-2">
                         <div className="flex flex-row gap-x-4 items-center w-full h-18 px-3 rounded-xl group-hover:bg-icon-bg">
                           <div className="flex flex-row w-70 py-4 items-center sm:w-full md:w-full">
                             <div className="bg-dua-bg flex rounded-lg items-center h-14 w-14">
@@ -59,7 +59,7 @@ export default function Category({ lang }) {
                               />
                             </div>
                             <div className="w-40 text-left ml-2">
-                              <p className="font-semibold text-md text-black xl:text-md subpixel-antialiased">
+                              <p className="font-semibold text-md text-ink xl:text-md subpixel-antialiased">
                                 {pick(cats, "cat_name", lang)}
                               </p>
                               <p className="text-gray-400 text-sm mt-1 antialiased">

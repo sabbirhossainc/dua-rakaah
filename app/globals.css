@@ -11,6 +11,32 @@
   --color-primary: #1fa45b;
   --color-dua-bg: #f7f8fa;
   --color-icon-bg: #e8f0f5;
+
+  /* Semantic colors: light values are the ones the app always had; dark values are set below (design D6). */
+  --color-surface: #ffffff;
+  --color-page: #ebeef2;
+  --color-ink: #000000;
+  --color-line: #cccdcf;
+  --color-muted: #868686;
+}
+
+/* The dark theme is chosen by the reader and set as data-theme on <html> (inline script and applier). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root[data-theme="dark"] {
+  --color-surface: #1c2024;
+  --color-page: #0f1114;
+  --color-ink: #e6e8eb;
+  --color-line: #3a4047;
+  --color-muted: #9aa1a9;
+  --color-dua-bg: #23282d;
+  --color-icon-bg: #2b3238;
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-ink);
 }
 
 /*

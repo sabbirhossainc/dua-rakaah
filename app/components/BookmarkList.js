@@ -18,7 +18,7 @@ export default function BookmarkList({ lang, index }) {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-lg bg-white p-6">
+      <div className="flex flex-col items-start gap-3 rounded-lg bg-surface p-6">
         <p>{t(lang, "bookmarksEmpty")}</p>
         <Link href={`${langPrefix(lang)}/duas`} className="text-primary underline">
           {t(lang, "bookmarksEmptyLink")}
@@ -33,7 +33,7 @@ export default function BookmarkList({ lang, index }) {
         <li key={item.id}>
           <Link
             href={item.href}
-            className="block rounded-lg bg-white p-5 hover:bg-icon-bg"
+            className="block rounded-lg bg-surface p-5 hover:bg-icon-bg"
           >
             <span className="block font-medium text-primary">{item.title}</span>
             <span className="mt-1 block text-sm text-gray-400">{item.category}</span>

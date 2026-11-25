@@ -15,7 +15,7 @@ function Labeled({ label, children }) {
 
 export default function DuaCard({ dua, lang }) {
   return (
-    <div id={`dua-${dua.id}`} className="bg-white rounded-lg mb-5 scroll-mt-4">
+    <div id={`dua-${dua.id}`} className="bg-surface rounded-lg mb-5 scroll-mt-4">
       <div className="p-6">
         <div className="flex flex-row justify-start items-center">
           <Image
@@ -42,7 +42,7 @@ export default function DuaCard({ dua, lang }) {
                 <p
                   lang="ar"
                   dir="rtl"
-                  className="mt-5 text-right leading-[3rem] font-normal text-[28px] whitespace-pre-line"
+                  className="mt-5 text-right leading-[calc(var(--arabic-size,28px)*48/28)] font-normal text-[length:var(--arabic-size,28px)] whitespace-pre-line"
                 >
                   {part.arabic}
                 </p>
@@ -65,7 +65,7 @@ export default function DuaCard({ dua, lang }) {
           </div>
         ))}
       </div>
-      <div className="flex flex-row items-center justify-end px-6">
+      <div className="px-6">
         <DuaIcons duaId={dua.id} lang={lang} />
       </div>
     </div>

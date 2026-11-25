@@ -95,7 +95,7 @@ export default function MenuCom() {
         aria-haspopup="true"
         aria-controls="dropdown"
         onClick={() => setOpen((prev) => !prev)}
-        className="inline-flex w-full items-center justify-center gap-x-2 bg-transparent px-3 py-2 text-sm font-semibold text-gray-900"
+        className="inline-flex w-full items-center justify-center gap-x-2 bg-transparent px-3 py-2 text-sm font-semibold text-ink"
       >
         <Image
           src="/icons/profile1.svg"
@@ -125,7 +125,7 @@ export default function MenuCom() {
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="menu-button"
-          className="absolute right-0 z-10 mt-2 w-60 origin-top-right rounded-2xl bg-white px-3 py-4 pt-6 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
+          className="absolute right-0 z-10 mt-2 w-60 origin-top-right rounded-2xl bg-surface px-3 py-4 pt-6 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
         >
           {data.map((menu) => (
             <div
@@ -148,7 +148,7 @@ export default function MenuCom() {
                   role="menuitem"
                   id={`menu-item-${menu.item}`}
                   onClick={() => setOpen(false)}
-                  className="ml-3 text-sm text-gray-900"
+                  className="ml-3 text-sm text-ink"
                 >
                   {menu.title}
                 </a>

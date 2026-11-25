@@ -1,6 +1,6 @@
 # Plan: ird-dua-app
 
-_Last updated 2026-11-25 (phase 3 bookmarks done). This file covers only the work still ahead. Completed work (restructure into one
+_Last updated 2026-11-25 (phase 3 bookmarks, memorize and settings done). This file covers only the work still ahead. Completed work (restructure into one
 Next.js app, SQLite via `lib/db.js`, Next 16, Tailwind 4, ESLint flat config) is in git history, in commit `d1557b2`
 on branch `restructure/single-next-app`. Phase 1 (content pages) is the OpenSpec change `add-content-pages`, in
 `openspec/changes/archive/2026-11-25-add-content-pages/`._
@@ -28,13 +28,15 @@ modeled on duaruqyah.com.
 - The content DB is compacted (604 KB), and `npm run db:vacuum` repeats that safely.
 - Duas can be bookmarked (the icon on each card), and `/bookmark` lists them. Bookmarks work offline, sync to a shared
   database, and follow the reader after Google sign-in (phase 3).
+- Duas can be memorized (the third icon on each card: a "learned" checkbox and progress steps 0, 25, 50, 75, 100), and
+  `/memorize` lists what the reader has started. It works offline and syncs the same way as bookmarks (phase 3).
 
 **Not done yet:**
 
 | Area | State |
 |---|---|
 | `/` and `/support` | Placeholder text only. `/` shows just "Home Page". |
-| LeftBar items (`/alldua`, `/memorize`, `/ruqyah`, `/dua-info`, `/books`) | These routes don't exist. Memorize becomes a real feature (phase 3, next). The others stay as placeholders. `/bookmark` and `/bn/bookmark` exist. |
+| LeftBar items (`/alldua`, `/ruqyah`, `/dua-info`, `/books`) | These routes don't exist. The others stay as placeholders. `/bookmark`, `/bn/bookmark`, `/memorize` and `/bn/memorize` exist. |
 | `Search` and the category search input | Markup only. Search was left out of phase 1 (item 7 of the old roadmap). |
 | `DuaIcons` copy, plan, share, report | Links with `href=""` and no behavior. The bookmark icon works (phase 3). |
 | `RightBar` settings (general, font, appearance) | Static. Only the language buttons work. |
@@ -136,7 +138,7 @@ Implemented by the OpenSpec change `add-offline-pwa`. Read its `design.md` for t
 
 Left for later: a web app manifest and PNG icons (installing the app), and an offline banner.
 
-### Phase 3: User data, identity and sync (bookmarks, sync and Google sign-in done; memorize and preferences next)
+### Phase 3: User data, identity and sync (bookmarks, sync, Google sign-in, memorize and settings done)
 
 Implemented for bookmarks by the OpenSpec change `add-user-data-sync`. Read its `design.md` for the reasons. In short:
 
@@ -153,11 +155,33 @@ Implemented for bookmarks by the OpenSpec change `add-user-data-sync`. Read its 
 - **Tests:** unit and store tests, and a convergence test that replays random schedules over simulated devices (200
   seeds). Sign-in with a real Google account was checked by hand on 2026-11-25: the account was created with only the Google ID, bookmarks synced to it, and a second device (local data wiped, session kept) received them.
 
+Memorize is implemented by the OpenSpec change `add-memorize` (read its `design.md` for the reasons). In short:
+
+- **Generic sync.** The server's store, the sign-in merge and the browser's runner, sign-in and sign-out code now loop
+  over the record types in `lib/sync/records.js` (server) and `CLIENT_TYPES` in `lib/local/apply.js` (browser). A new
+  record type is a descriptor in each plus its tests.
+- **One change type, `memorize`.** A reset is an ordinary change with a higher `reset_gen`, not a separate
+  `memorize.reset` type, because the server's merge only looks at `reset_gen` (section 4.4).
+- **The record has no clock:** `memorize(owner_id, dua_id, learned, progress, reset_gen, server_seq)`. There is no
+  `deleted` ("start over" is a reset to 0 and not learned), no `updated_at` and no `last_reviewed_at`: nothing reads
+  them, and a device-clock value inside a max-merge cannot be corrected by the server.
+- **`types` in the request.** A request may name the record types the device understands. Without it the server sends
+  bookmarks only, so a browser still running old code is never sent rows it would store as bookmarks. A device that
+  starts to understand a new type pulls from position 0 once (`meta.pulled_types`).
+- **Dexie version 2** adds the `memorize` table. Progress input is five steps (0, 25, 50, 75, 100); the server accepts
+  any whole number from 0 to 100. The panel couples the two fields: ticking "learned" sets progress 100, un-ticking
+  leaves progress alone, and choosing a step under 100 also un-ticks "learned".
+- **Deploy order:** run `npm run db:user:init` on the hosted database *before* deploying the build that needs a new table.
+- **Settings** (OpenSpec change `add-preferences`): record type `preference`, keyed by `pref_key` (not `key`, an SQL
+  keyword), with three names, `theme`, `arabic_font` and `reciter_id` (stored only until phase 4). Dexie version 3. Deviations
+  from sections 4.2 and 4.5: the column is `pref_key`, there is no `lang` setting (the language is the page's URL), and the
+  account-wins rule at sign-in is a `fields.if_absent` change (set only if the account has no value) used for queued and
+  re-sent setting changes, plus `mergeAnon` on the server. Dark theme and text size are applied by `PreferencesApplier`
+  and an inline script before first paint, using the `dua-prefs` copy in localStorage. The settings are on the right bar
+  (1536px and wider only); a `/settings` page for narrower screens is not built.
+
 Still to do in phase 3:
-1. **Memorize:** a `/memorize` page with the learned flag and progress, as a new record type in `lib/sync/records.js`
-   with the merge rule in section 4.4 (`reset_gen`). It needs a new change.
-2. **Reciter and language preferences** (reciter comes with phase 4), also as a record type.
-3. Purge old `applied_ops` and removed rows, and add account deletion.
+1. Purge old `applied_ops` and removed rows, and add account deletion.
 
 ### Phase 4: Audio
 
@@ -215,7 +239,7 @@ time, and its tokens cover a whole database. Direct sync would need one Turso da
 that issues tokens, and merging an anonymous user into an account would mean copying across databases. Its browser
 package was also pre-release when this was checked. The user data here is small, so server-mediated sync is simpler and safer.
 
-### 4.2 Turso schema (bookmarks, `owners`, `applied_ops` and the counter are built; memorize and preferences are not)
+### 4.2 Turso schema (bookmarks, memorize, preferences, `owners`, `applied_ops` and the counter are built)
 
 ```
  owners                       bookmarks                        memorize
@@ -224,19 +248,19 @@ package was also pre-release when this was checked. The user data here is small,
  | kind  anon|account  |      | dua_id                    |    | dua_id                       |
  | user_id (nullable)  |      | deleted   0|1             |    | learned  0|1                  |
  | merged_into (null)  |      | updated_at (client time)  |    | progress 0..100              |
- | created_at          |      | server_seq (sync position)|    | last_reviewed_at             |
- +---------------------+      | PK(owner_id, dua_id)      |    | reset_gen                    |
-                              +---------------------------+    | deleted, updated_at          |
- (no Auth.js tables: JWT sessions, no adapter)               | server_seq                   |
-                                                               | PK(owner_id, dua_id)         |
+ | created_at          |      | op_id, server_seq         |    | reset_gen                    |
+ +---------------------+      | PK(owner_id, dua_id)      |    | server_seq                   |
+                              +---------------------------+    | PK(owner_id, dua_id)         |
+ (no Auth.js tables: JWT sessions, no adapter)                 | (no clock, no deleted flag)  |
                                                                +------------------------------+
  preferences                                  applied_ops
  +------------------------------------------+ +--------------------------------------+
  | owner_id  --> owners.id                  | | PK(owner_id, op_id), applied_at      |
- | key       "reciter_id", "lang", ...      | | ignores ops that are sent twice      |
+ | pref_key  "theme", "arabic_font",        | | ignores ops that are sent twice      |
+ |           "reciter_id" (built)           | |                                      |
  | value     text                           | +--------------------------------------+
- | updated_at, server_seq                   |
- | PK(owner_id, key)                        |
+ | updated_at, op_id, server_seq            |
+ | PK(owner_id, pref_key)                   |
  +------------------------------------------+
 ```
 
@@ -282,11 +306,10 @@ Pushes and pulls happen in one request. The request is safe to retry, because ea
    if a.reset_gen != b.reset_gen:  return the row with the higher reset_gen
    else: learned          = max(a.learned, b.learned)
          progress         = max(a.progress, b.progress)
-         last_reviewed_at = max(a.last_reviewed_at, b.last_reviewed_at)
 ```
 
 - **Increments `reset_gen`:** un-ticking "learned", lowering progress, or "start over". The client sends these as an
-  explicit `memorize.reset` op that carries the new values.
+  ordinary `memorize` change that carries the new values and the higher `reset_gen`.
 - **Doesn't increment it:** ticking "learned" or raising progress. Those are normal changes, merged with max().
 - The merge gives the same result whatever order or however many times changes arrive. Two devices resetting at
   the same time end up with the same `reset_gen`, and their new values are merged with max().
@@ -531,7 +554,7 @@ Sources: [developer journey](https://api-docs.quran.foundation/docs/developer-jo
 
 1. _(Resolved in phase 1: `?cat=N` stays, and `/duas` is a category grid.)_
 2. **What `/` should be:** it shows only "Home Page". A redirect to `/duas`, or a real home page?
-3. **Memorize progress input:** a free 0 to 100 slider, or steps (0 / 25 / 50 / 75 / 100)? Steps are easier on mobile.
+3. _(Resolved in `add-memorize`: five steps, 0 / 25 / 50 / 75 / 100. The server accepts any whole number from 0 to 100.)_
 4. **The audio UI:** hidden when offline, and disabled with "Audio unavailable" when online but broken. That reading was recorded but not confirmed.
 5. **Default reciter:** is recitation 7 really Alafasy, and is that the one you want?
 6. **Who reviews the dua-to-audio matches,** and do they need sign-off from someone with religious knowledge?

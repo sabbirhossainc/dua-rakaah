@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import BookmarkButton from "@/app/components/BookmarkButton";
+import MemorizeButton from "@/app/components/MemorizeButton";
 
-// The bookmark icon is a real control. The other four are still placeholders.
+// The bookmark and memorize icons are real controls. The other three are still placeholders.
 export default function DuaIcons({ duaId, lang = "en" }) {
   const data = [
     {
@@ -37,10 +38,12 @@ export default function DuaIcons({ duaId, lang = "en" }) {
     },
   ];
   return (
-    <div className="flex items-center flex-row justify-between py-6 gap-x-8">
+    <div className="flex w-full flex-row flex-wrap items-center justify-end gap-x-8 gap-y-3 py-6">
       {data.map((item) =>
         item.icon === "bookmarkd" ? (
           <BookmarkButton key={item.id} duaId={duaId} lang={lang} />
+        ) : item.icon === "plan" ? (
+          <MemorizeButton key={item.id} duaId={duaId} lang={lang} />
         ) : (
         <Link href={item.href} key={item.id}>
           <div className="relative w-6">

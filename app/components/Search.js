@@ -18,7 +18,7 @@ const Search = (props) => (
           </span>
           <input
             id="search_box"
-            className="h-12 placeholder:text-sm border block bg-white w-full xl:w-80 rounded-md pl-4 shadow-xs focus:outline-hidden focus:border-primary focus:ring-primary focus:ring-0.5 sm:text-sm"
+            className="h-12 placeholder:text-sm border block bg-surface w-full xl:w-80 rounded-md pl-4 shadow-xs focus:outline-hidden focus:border-primary focus:ring-primary focus:ring-0.5 sm:text-sm"
             placeholder="Search by Dua Name"
             type="text"
             name="search"

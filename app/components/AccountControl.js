@@ -133,7 +133,7 @@ export default function AccountControl() {
       <button
         type="button"
         onClick={account ? handleSignOut : handleSignIn}
-        className="mr-3 rounded-md border border-solid border-[#cccdcf] bg-white px-3 py-1 text-sm hover:bg-icon-bg"
+        className="mr-3 rounded-md border border-solid border-line bg-surface px-3 py-1 text-sm hover:bg-icon-bg"
       >
         {t(lang, account ? "signOut" : "signIn")}
       </button>
@@ -146,7 +146,7 @@ export default function AccountControl() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="unsynced-warning"
-            className="mx-4 max-w-md rounded-lg bg-white p-6 shadow-lg"
+            className="mx-4 max-w-md rounded-lg bg-surface p-6 shadow-lg"
           >
             <p id="unsynced-warning">
               {confirm.count === 1 ? t(lang, "unsyncedOne") : fmt(lang, "unsyncedMany", { count: confirm.count })}
@@ -156,7 +156,7 @@ export default function AccountControl() {
                 ref={cancelRef}
                 type="button"
                 onClick={() => setConfirm(null)}
-                className="rounded-md border border-solid border-[#cccdcf] px-4 py-2"
+                className="rounded-md border border-solid border-line px-4 py-2"
               >
                 {t(lang, "cancel")}
               </button>

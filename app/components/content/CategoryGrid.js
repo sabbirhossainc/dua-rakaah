@@ -14,7 +14,7 @@ export default function CategoryGrid({ lang }) {
           key={cat.cat_id}
           data-category-card
           href={categoryHref(cat, lang)}
-          className="group flex flex-row items-center gap-x-4 rounded-lg bg-white p-5 hover:bg-icon-bg"
+          className="group flex flex-row items-center gap-x-4 rounded-lg bg-surface p-5 hover:bg-icon-bg"
         >
           <div className="flex h-14 w-14 shrink-0 items-center rounded-lg bg-dua-bg">
             <Image
@@ -27,7 +27,7 @@ export default function CategoryGrid({ lang }) {
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-black">{pick(cat, "cat_name", lang)}</p>
+            <p className="font-semibold text-ink">{pick(cat, "cat_name", lang)}</p>
             <p className="mt-1 text-sm text-gray-400">
               {t(lang, "subcategory")}: {cat.subcat_count}
             </p>
