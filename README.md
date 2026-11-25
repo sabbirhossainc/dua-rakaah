@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+## To run this Project
+ #install the dependences 
+## Run this command on both front-end and back-end
+ #npm run dev
+=======
 # Dua & Ruqyah
 
 A web app that shows Islamic supplications (duas) grouped by category, with the Arabic text,
@@ -170,3 +176,4 @@ replay one. Sign-in with Google itself needs real credentials and has to be chec
 `dua.id` values must stay stable, because bookmarks (and later memorize) refer to them. Rows that
 share an `id` are the parts of one dua, and their order in the table is the only record of part order, so keep it.
 After replacing the file, run `npm run db:vacuum` and `npm run smoke`.
+>>>>>>> restructure/single-next-app
