@@ -1,0 +1,44 @@
+@import 'tailwindcss';
+
+@theme {
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 976px;
+  --breakpoint-xl: 1440px;
+  /* v3 default, restated in px so every breakpoint uses the same unit */
+  --breakpoint-2xl: 1536px;
+
+  --color-primary: #1fa45b;
+  --color-dua-bg: #f7f8fa;
+  --color-icon-bg: #e8f0f5;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* v3 gave buttons a pointer cursor; v4 uses the browser default. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* v3 placeholders were gray-400; v4 uses the text color at 50% opacity. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+}
