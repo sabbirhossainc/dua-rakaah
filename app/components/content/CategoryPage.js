@@ -14,6 +14,7 @@ import {
   getSubcategories,
 } from "@/lib/db";
 import { withRecordings } from "@/lib/audio/lookup";
+import { quranConfigured } from "@/lib/quran/config";
 import audioSources from "@/data/audio-sources.json";
 import SubcategorySection from "@/app/components/content/SubcategorySection";
 
@@ -62,7 +63,8 @@ export default async function CategoryPage({ lang, params, searchParams }) {
   const { category } = result;
   const sections = groupBySubcategory(
     getSubcategories(category.cat_id),
-    withRecordings(groupDuas(getDuasByCategory(category.cat_id), lang), audioSources)
+    // Read on each request, so the pages and the routes agree on whether Quran.com audio is set up.
+    withRecordings(groupDuas(getDuasByCategory(category.cat_id), lang), audioSources, { quran: quranConfigured() })
   );
 
   return (

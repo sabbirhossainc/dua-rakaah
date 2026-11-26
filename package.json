@@ -14,10 +14,11 @@
     "db:user:init": "node --env-file-if-exists=.env.local scripts/init-user-db.mjs",
     "db:user:purge": "node --env-file-if-exists=.env.local scripts/purge-user-db.mjs",
     "audio:match": "node scripts/match-audio.mjs",
-    "audio:check": "node scripts/check-audio.mjs"
+    "audio:check": "node --env-file-if-exists=.env.local scripts/check-audio.mjs"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
+    "@quranjs/api": "^3.18.2",
     "@serwist/turbopack": "^9.6.0",
     "better-sqlite3": "^13.2.0",
     "dexie": "^4.4.7",

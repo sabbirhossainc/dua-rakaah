@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import ArabicSizeSetting from "@/app/components/ArabicSizeSetting";
 import AppearanceSetting from "@/app/components/AppearanceSetting";
 import LanguageToggle, { LanguageButtons } from "@/app/components/LanguageToggle";
+import ReciterSetting from "@/app/components/ReciterSetting";
 export default function RightBar() {
   return (
     
@@ -46,6 +47,7 @@ export default function RightBar() {
                 </div>
               </div>
             </div>
+            <ReciterSetting />
             <div className="mx-4 my-4">
               <div className="">
                 <div className="cursor-pointer">

@@ -71,6 +71,10 @@ const catByName = (name) => categories.find((c) => c.cat_name_en === name);
 const sleep = catByName("Sleep");
 const morning = catByName("Morning & Evening");
 
+// Nothing from the Quran Foundation belongs in a page: its audio hosts, the invented names of the test stand-in, and
+// well-known reciters.
+const QURAN_CONTENT = /verses\.quran\.(?:com|foundation)|quranicaudio\.com|qurancdn\.com|Alafasy|Invented Reciter|Reciter Seven/;
+
 // The recordings each category page may mention: those listed for a part whose stored Arabic is still the matched one.
 const listed = JSON.parse(fs.readFileSync(new URL("../data/audio-sources.json", import.meta.url), "utf8")).recordings;
 function expectedAudio(catId) {
@@ -135,7 +139,8 @@ for (const lang of ["en", "bn"]) {
     check(`${p}: exactly the listed recording URLs (${wanted.length})`, JSON.stringify(audioUrls) === JSON.stringify(wanted), `found ${audioUrls.length}`);
     const text = visibleText(html);
     check(`${p}: no "Section: Sections"`, !text.includes("Section: Sections"));
-    check(`${p}: no audio control in the server HTML`, !/Play recitation|Recitation: Hisn|তিলাওয়াত চালান/.test(noScripts(html)));
+    check(`${p}: no audio control in the server HTML`, !/Play recitation|Recitation: |Full verse recitation|তিলাওয়াত চালান/.test(noScripts(html)));
+    check(`${p}: no Quran.com address or reciter name`, !QURAN_CONTENT.test(html), QURAN_CONTENT.exec(html)?.[0]);
     check(`${p}: no null/undefined text`, !/\b(null|undefined)\b/i.test(text), /.{20}\b(null|undefined)\b.{20}/i.exec(text)?.[0] ?? "");
     if (lang === "bn") check(`${p}: lang="bn"`, html.includes('lang="bn"'));
     const arabicTags = [...html.matchAll(/<p[^>]*lang="ar"[^>]*>/g)].map((m) => m[0]);
@@ -151,6 +156,32 @@ for (const lang of ["en", "bn"]) {
 for (const p of ["/", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"]) {
   const { body } = await get(p);
   check(`${p}: no <audio>, no ihadis.com, no recording URL`, !body.includes("<audio") && !body.includes("ihadis.com") && !body.includes(".mp3"));
+  check(`${p}: no Quran.com address or reciter name`, !QURAN_CONTENT.test(body), QURAN_CONTENT.exec(body)?.[0]);
+}
+
+// ---- Quran.com routes: they follow whether the server has credentials, which the reciter list shows ----
+{
+  const list = await fetch(`${BASE}/api/reciters`);
+  const configured = list.status !== 404;
+  console.log(`Quran.com source: ${configured ? "set up" : "not set up"} on the server under test`);
+  check("/api/reciters: never stored", list.headers.get("cache-control") === "no-store", list.headers.get("cache-control"));
+  if (configured) check("/api/reciters: 200 or 503", [200, 503].includes(list.status), `status ${list.status}`);
+  const status = async (path) => {
+    const r = await fetch(BASE + path);
+    check(`${path}: never stored`, r.headers.get("cache-control") === "no-store", r.headers.get("cache-control"));
+    return r.status;
+  };
+  // Refused or unlisted requests never reach the source, so these hold with any credentials.
+  for (const path of ["/api/audio/abc/1", "/api/audio/4/0", "/api/audio/4/1?reciter=x"]) {
+    const got = await status(path);
+    check(`${path}: 400`, got === 400, `status ${got}`);
+  }
+  const unlisted = await status("/api/audio/999999/1");
+  check("/api/audio for an unlisted part: 404", unlisted === 404, `status ${unlisted}`);
+  const first = listed.find((r) => r.quran);
+  const path = `/api/audio/${first.dua_id}/${first.part}`;
+  const got = await status(path);
+  check(`${path}: ${configured ? "200 or 503" : "404"}`, configured ? [200, 503].includes(got) : got === 404, `status ${got}`);
 }
 
 // ---- specific scenarios ----

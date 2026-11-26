@@ -48,7 +48,7 @@ export default function DuaCard({ dua, lang }) {
                   {part.arabic}
                 </p>
               )}
-              {part.audio && <DuaAudio partKey={part.audio.key} urls={part.audio.urls} lang={lang} />}
+              {part.audio && <DuaAudio audio={part.audio} lang={lang} />}
               {part.transliteration && (
                 <Labeled label={t(lang, "transliteration")}>{part.transliteration}</Labeled>
               )}

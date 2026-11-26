@@ -2,17 +2,19 @@
 // Uses @serwist/turbopack, which needs a Route Handler because Turbopack has no plugin hook (design D1).
 import { createSerwistRoute } from "@serwist/turbopack";
 import { getCategories } from "@/lib/db";
-import { computeBuildRevision } from "@/lib/build-revision";
+import { DEFAULT_INPUTS, computeBuildRevision } from "@/lib/build-revision";
 import { buildPrecacheEntries } from "@/lib/precache";
+import { quranConfigured } from "@/lib/quran/config";
 
 // Build with SW_KILL=1 to ship a worker that removes itself and every saved file from readers' devices (design D9).
 // The development server serves it too: a production worker left on the same address replaces itself with it
 // the next time it checks for updates, and so stops answering from its saved pages (design D8).
 const kill = process.env.SW_KILL === "1" || process.env.NODE_ENV === "development";
 
-// Pages are rendered by the server, so Serwist can't hash them. The revision changes whenever the app or the
-// content database changes, which makes devices download the pages again (design D4).
-const revision = computeBuildRevision(process.cwd());
+// Pages are rendered by the server, so Serwist can't hash them. The revision changes whenever the app, the content
+// database or the list of recordings changes, or the Quran.com source is switched on or off, which makes devices
+// download the pages again (design D4).
+const revision = computeBuildRevision(process.cwd(), DEFAULT_INPUTS, { quran: quranConfigured() });
 
 // Icons, images and build files come from Serwist's own glob. The extension lists are an allow-list: its
 // defaults skip .woff2 fonts and would precache anything put in public/, audio included (design D3).

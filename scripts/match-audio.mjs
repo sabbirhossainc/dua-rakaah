@@ -1,4 +1,5 @@
-// Matches the Arabic of every dua part with the Hisn al-Muslim recordings (design D1 to D3).
+// Matches the Arabic of every dua part with the Hisn al-Muslim recordings and with the verses of a Quran text from
+// Tanzil (design D1 to D3 of the two audio changes).
 //   npm run audio:match              downloads the source again
 //   npm run audio:match -- --cached  reuses the download in .audio-cache/
 // Reads data/dua_main.sqlite (never changes it) and data/audio-review.json, and writes data/audio-sources.json and
@@ -7,8 +8,9 @@ import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { buildRecordings, coverage, lostRecordings, serializeSources } from "../lib/audio/build.js";
+import { buildRecordings, coverage, lostRecordings, lostVerses, serializeSources } from "../lib/audio/build.js";
 import { listParts } from "../lib/audio/parts.js";
+import { TANZIL_URL, createLocator, parseQuran } from "../lib/audio/quran.js";
 import { renderReport } from "../lib/audio/report.js";
 import { loadSource } from "../lib/audio/source.js";
 
@@ -77,6 +79,16 @@ function writeIfChanged(file, text) {
   return true;
 }
 
+/** The verified Quran text, ready to search. Throws when the download cannot be used. */
+async function loadQuran(fetchText) {
+  const body = await fetchText(TANZIL_URL, "quran-simple-clean.txt");
+  try {
+    return createLocator(parseQuran(body));
+  } catch (err) {
+    throw new Error(`${err.message}. Run again without --cached to download it again.`);
+  }
+}
+
 /**
  * @param {typeof DEFAULT_PATHS & { fetchText: (url: string, name: string) => Promise<string>, log?: (line: string) => void }} options
  */
@@ -85,7 +97,8 @@ export async function matchAudio({ dbPath, sourcesPath, reviewPath, cacheDir, fe
   const decisions = readJson(reviewPath);
   const before = fs.existsSync(sourcesPath) ? readJson(sourcesPath).recordings : [];
   const source = await loadSource(fetchText);
-  const { recordings, report, stale } = buildRecordings({ parts, items: source.items, decisions });
+  const quran = await loadQuran(fetchText);
+  const { recordings, report, stale } = buildRecordings({ parts, items: source.items, decisions, quran });
 
   const counts = coverage(parts, recordings);
   const share = (c) => `${c.partsWith} of ${c.parts} parts, ${c.duasWith} of ${c.duas} duas`;
@@ -93,6 +106,7 @@ export async function matchAudio({ dbPath, sourcesPath, reviewPath, cacheDir, fe
     `Source: ${source.items.length} items from ${source.chapters} chapters`,
     `With a recording: ${share(counts.total)}`,
     ...counts.categories.map((c) => `  ${c.cat_id} ${names.get(c.cat_id) ?? ""}: ${share(c)}`),
+    `With Quran verses: ${recordings.filter((r) => r.quran).length} parts, ${recordings.filter((r) => r.quran && !r.candidates.length).length} of them with no other recording`,
     `Parts needing review: ${report.filter((r) => r.review).length}`,
     `Recordings accepted automatically below 100%: ${report.flatMap((r) => r.entries).filter((e) => e.status === "auto" && e.likeness < 1).length}`,
   ];
@@ -100,8 +114,11 @@ export async function matchAudio({ dbPath, sourcesPath, reviewPath, cacheDir, fe
     ...source.unreadable.map((id) => `Chapter ${id} could not be read and was skipped`),
     ...source.badItems.map((where) => `Skipped an item with no usable ID or text: ${where}`),
     ...source.badUrls.map((b) => `Item ${b.item} has an unexpected audio address, so it is not listed: ${b.address}`),
-    ...stale.map((d) => `Out-of-date decision ignored: dua ${d.dua_id} part ${d.part}, item ${d.item} (${d.decision})`),
+    ...stale.map(
+      (d) => `Out-of-date decision ignored: dua ${d.dua_id} part ${d.part}, ${d.verses ? `verses ${d.verses}` : `item ${d.item}`} (${d.decision})`
+    ),
     ...lostRecordings(before, recordings).map((l) => `Lost its recording: dua ${l.dua_id} part ${l.part}`),
+    ...lostVerses(before, recordings).map((l) => `Lost its Quran verses: dua ${l.dua_id} part ${l.part}`),
   ];
 
   fs.mkdirSync(cacheDir, { recursive: true });

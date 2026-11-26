@@ -21,6 +21,7 @@ app/                  routes and components
   offline/            the page shown for something that is not saved
   bookmark/, bn/bookmark/  the bookmark pages
   api/sync, api/auth  the sync route and Google sign-in (Auth.js)
+  api/audio, api/reciters  Quran.com recitation addresses and the reciter list
   account/, bn/account/    "Delete my data"; api/account/delete is its route
 lib/
   db.js               read-only SQLite helpers (server only)
@@ -30,9 +31,10 @@ lib/
   sync/               server side of sync: schema, merge rules, identity, the request handler
   local/              browser side: the IndexedDB store (Dexie), the sync runner, sign-in and sign-out
   turso.js, auth.js   the shared user-data database and Google sign-in (server only)
-  audio/              recordings: Arabic matching, the list builder, the review report and the player
+  audio/              recordings: Arabic and Quran matching, the list builder, the review report and the player
+  quran/              the Quran Foundation client, the recitation service and its route handlers (server only)
 data/dua_main.sqlite  the content database (10 categories, 23 subcategories, 176 duas)
-data/audio-sources.json  the recordings each dua part may play (generated: do not edit by hand)
+data/audio-sources.json  the Quran verses and recordings each dua part may play (generated: do not edit by hand)
 data/audio-review.json   a person's approvals and rejections of those matches
 public/               icons and category images
 scripts/              smoke test, precache check, user-data setup and purge, database compaction, audio matching
@@ -65,8 +67,8 @@ Open http://localhost:3000/duas.
 | `npm run db:user:init` | Creates the user-data tables in the database named by `TURSO_DATABASE_URL`. Safe to run again. Reads `.env.local`. |
 | `npm run db:user:purge` | Deletes removed bookmarks and applied change IDs that the server accepted more than 180 days ago. `npm run db:user:purge -- --dry-run` only reports the counts. Reads `.env.local`. |
 | `npm run db:vacuum` | Compacts `data/dua_main.sqlite`. It replaces the file only if the schema and every row stay identical. Stop the dev server first. |
-| `npm run audio:match` | Matches the dua texts with Hisn al-Muslim recordings and writes `data/audio-sources.json` and a review report. `npm run audio:match -- --cached` reuses the last download. See "Audio". |
-| `npm run audio:check` | Checks that every listed recording still answers with audio. Exits with an error if one does not. See "Audio". |
+| `npm run audio:match` | Matches the dua texts with Quran verses and Hisn al-Muslim recordings, and writes `data/audio-sources.json` and a review report. `npm run audio:match -- --cached` reuses the last downloads. See "Audio". |
+| `npm run audio:check` | Checks that every listed recording still answers with audio, and with Quran Foundation credentials every listed verse. Exits with an error if one does not. Reads `.env.local`. See "Audio". |
 
 ## URLs
 
@@ -112,69 +114,128 @@ After one online visit, every page can be read with no network: the 20 category 
 
 ## Audio
 
-The recordings come from [Hisn al-Muslim](https://www.hisnmuslim.com). Which recording belongs to which dua part is
-decided before the build, never while a reader is playing. The design is in
-`openspec/changes/archive/2026-11-26-add-dua-audio/design.md`.
+The recordings come from [Hisn al-Muslim](https://www.hisnmuslim.com) and, for duas that are Quran verses, from
+[Quran.com](https://quran.com) (Quran Foundation), when its credentials are set. Which recording or verses belong to
+which dua part is decided before the build, never while a reader is playing. The designs are in
+`openspec/changes/archive/2026-11-26-add-dua-audio/design.md` and `openspec/changes/archive/2026-11-26-add-quran-audio/design.md`.
 
 **Do not launch audio until Hisn al-Muslim's usage terms are confirmed.** None were found on 2026-11-26. To withdraw
-audio, set `recordings` to `[]` in `data/audio-sources.json` and rebuild (running `audio:match` again would refill it).
+all audio, set `recordings` to `[]` in `data/audio-sources.json` and rebuild (running `audio:match` again would refill
+it).
 
 ### What readers see
 
-- A dua part with a listed recording has a play and pause button under its Arabic text, with the credit
-  "Recitation: Hisn al-Muslim" (in Bangla on `/bn` pages). A part with no recording has nothing. The bookmark and
-  memorize pages have no audio.
-- One recording plays at a time, and leaving the page stops it. **Nothing is requested from the source until play is
-  pressed.** Pressing play lets the source see the reader's address.
-- A recording that errors, or has not started after 15 seconds, is skipped in favor of the part's next one. When none
-  works, the button reads "Audio unavailable" until the device reconnects.
-- **Offline, the buttons are hidden.** Audio is never saved on the device. Saved pages carry the list, so a changed list
-  reaches devices as a normal update.
+- A dua part with a recording has a play and pause button under its Arabic text, with a credit (in Bangla on `/bn`
+  pages). A part with none has nothing. The bookmark and memorize pages have no audio.
+- A part with listed verses plays Quran.com first: its verses one after another as one recording. The credit reads
+  "Recitation: Quran Foundation", with the reciter's name from the moment play is pressed and answered. When the verses
+  hold more than the card, it is also labeled "Full verse recitation". If Quran.com fails, the part's Hisn al-Muslim
+  recording plays instead, under the credit "Recitation: Hisn al-Muslim".
+- **Reciter:** the Settings panel (visible at 1536px and wider) has "Audio / Reciter", a list of the verse-by-verse
+  reciters. Recitation 7 is selected until the reader chooses; the choice is saved and synced like other settings, and
+  applies from the next press on a part that is not playing or paused. The block is hidden offline and without
+  credentials, and says so when the list cannot be loaded.
+- One recording plays at a time, and leaving the page stops it. **No audio, and no audio address, is requested until play
+  is pressed** (the reciter list is loaded for the panel). Pressing play lets the audio's host see the reader's address.
+- A recording that errors, or has not started after 15 seconds (each verse has its own 15), is skipped in favor of the
+  part's next one. When none works, the button reads "Audio unavailable" until the device reconnects or, for Quran.com,
+  another reciter is chosen. If a browser will not start the sound after waiting for the address, a second press does.
+- **Offline, the buttons are hidden.** Audio is never saved on the device. Saved pages carry which parts have audio, so a
+  changed list, or switching Quran.com on or off, reaches devices as a normal update.
 
 ### Matching
 
-`npm run audio:match` downloads the source's chapters into `.audio-cache/`, compares the Arabic of every dua part with
-every item, and writes:
+`npm run audio:match` downloads Hisn al-Muslim's chapters and the Quran text into `.audio-cache/`, compares the Arabic
+of every dua part with both, and writes:
 
-- `data/audio-sources.json`, the shipped list: dua, part number (the part's position in the dua), a hash of the
-  part's Arabic text, and its recordings in play order. It holds no text from the source. Commit it.
-- `.audio-cache/report.html`, the review report. **Never commit `.audio-cache/`:** it holds the source's text, whose
-  usage terms are not known.
+- `data/audio-sources.json`, the shipped list. For each dua part: dua, part number (the part's position in the dua), a
+  hash of the part's Arabic text, `quran` (the verses, such as `"from": "2:285", "to": "2:286"`, with `coverage`
+  `"full"`, or `"partial"` when the verses hold more than the card; or `null`) and `candidates` (the Hisn al-Muslim
+  recordings in play order, possibly none). It holds no text from either source. Commit it.
+- `.audio-cache/report.html`, the review report. **Never commit `.audio-cache/`:** it holds both sources' text, and
+  Hisn al-Muslim's usage terms are not known.
 
-Vowel marks, punctuation, spacing and spelling variants of a letter are ignored. A recording is accepted
-automatically only when the two **whole** texts are at least 95% alike. A dua that is merely contained in a longer
-recording, or the other way round, needs a person.
+Vowel marks, punctuation, spacing and spelling variants of a letter are ignored.
 
-If anything cannot be downloaded, or the review file has a mistake, the list is left unchanged. A chapter that
-arrives but cannot be read is skipped with a warning. Every part that loses its recording is named.
+- **Hisn al-Muslim:** a recording is accepted automatically only when the two **whole** texts are at least 95% alike. A
+  dua that is merely contained in a longer recording, or the other way round, needs a person.
+- **Quran verses:** accepted automatically only when the card is exactly one run of whole verses in one surah that
+  appears nowhere else. An opening basmala before a surah's first verse is optional. Part of a verse, a repeated verse
+  or a near match needs a person.
+
+The Quran text is the "Simple Clean" text of the [Tanzil Project](https://tanzil.net) (Copyright Tanzil Project,
+[Creative Commons Attribution 3.0](https://tanzil.net/docs/Text_License)). It is used only to choose verse keys: the
+app shows the Arabic from its own database. The command refuses a download that is incomplete or lacks Tanzil's notice.
+Check [tanzil.net/updates](https://tanzil.net/updates/) for newer versions.
+
+If anything cannot be downloaded, the Quran text is unusable, or the review file has a mistake, the list is left
+unchanged. A chapter that arrives but cannot be read is skipped with a warning. Every part that loses its recording or
+its verses is named.
 
 ### Review
 
-1. Run `npm run audio:match` and open `.audio-cache/report.html` in a browser (it plays the recordings, so you need a
-   connection).
+1. Run `npm run audio:match` and open `.audio-cache/report.html` in a browser (it plays the Hisn al-Muslim
+   recordings, so you need a connection). It cannot play Quran verses: listen to those in the running app.
 2. Listen to every recording accepted automatically below 100%, and to a sample of the others. Go through the pairs
-   under "Needs review".
-3. **Approve a recording only if it says what the card says: nothing missing and nothing extra.** Under each pair are
-   two lines, one to approve and one to reject. Copy the one you choose into `data/audio-review.json`, which is a
+   under "Needs review". Many short phrases are found inside verses without being quotations: leave those alone.
+3. **Approve a recording only if it says what the card says: nothing missing and nothing extra.** The one exception is
+   a verse that holds more than the card: if you approve it, the app labels it "Full verse recitation". Under each pair
+   are two lines, one to approve and one to reject. Copy the one you choose into `data/audio-review.json`, which is a
    JSON list:
 
    ```json
    [
      {"dua_id":4,"part":1,"item":10,"decision":"approve","text_sha":"…","item_sha":"…"},
-     {"dua_id":6,"part":1,"item":59,"decision":"reject","text_sha":"…","item_sha":"…","note":"recording is longer"}
+     {"dua_id":6,"part":1,"item":59,"decision":"reject","text_sha":"…","item_sha":"…","note":"recording is longer"},
+     {"dua_id":47,"part":1,"verses":"21:87-21:87","decision":"approve","text_sha":"…","verses_sha":"…"}
    ]
    ```
 
-   `note` is optional. A decision overrides the automatic rule in both directions.
+   An entry is about an `item` or about `verses`, never both. Only one run of verses can be approved for a part, and
+   that approval replaces an automatic one. `note` is optional. A decision overrides the automatic rule in both
+   directions.
 4. Run `npm run audio:match -- --cached`, then `npm run audio:check`, and commit both files in `data/`.
 
 A decision holds only for the two texts that were reviewed. If either changes, it is reported as out of date and
 ignored (an out-of-date rejection still keeps the recording out), so decide again and replace the old line.
 
+### Quran.com credentials
+
+Quran.com audio is optional. It is on when all four variables are filled in (see `.env.example`), and off, with no
+control and no reciter choice, when any is empty. **Set them both when you build and when you run the app:** saved
+pages are built with the source on or off. Changing them only at run time leaves saved devices with the old controls
+until the next build. All four are server only; never give one a `NEXT_PUBLIC_` prefix, and never commit them.
+
+1. Register the app in the Quran Foundation
+   [Developer Console](https://api-docs.quran.foundation/docs/developer-journey/) as a **Backend/server** app and
+   request the scope `content.audio.read`. The client secret is shown only once.
+2. New apps start on **pre-live**, which has surahs 1 and 2 only (try duas 4, 125 and 202):
+
+   ```
+   QF_OAUTH2_BASE_URL=https://prelive-oauth2.quran.foundation
+   QF_API_BASE_URL=https://apis-prelive.quran.foundation
+   ```
+
+3. After production access is approved, switch the client ID, the secret and both addresses **together**
+   (`https://oauth2.quran.foundation` and `https://apis.quran.foundation`), then rebuild.
+
+The browser only ever calls this app: `GET /api/reciters` and `GET /api/audio/<dua>/<part>?reciter=<n>`. The server asks
+Quran Foundation, keeps an answer in memory for one day at most (their limit is a week), writes none to disk, and only
+passes on `https` addresses on their audio hosts. When the reader's reciter lacks a verse, recitation 7 is used.
+
+**Do not launch Quran.com audio until all of these are done:** production access is approved; a Privacy Policy and
+Terms of Use are published and name the audio hosts; the listed verses have been checked by listening; and Quran
+Foundation has confirmed this use. Their [Developer Terms](https://api-docs.quran.foundation/legal/developer-terms/)
+(2026-11-20) say a website built from their content must refresh it through their Content Sync APIs, and do not say
+whether a website that only streams their recitations counts. Ask developers@quran.com. To switch the source off,
+empty the four variables and rebuild.
+
 ### Checking the recordings
 
-The source can move or remove files. `npm run audio:check` asks for the first byte of every listed address, tries a
-failed one once more, changes nothing, and exits with 1 if any fails. **Nothing runs it unless you schedule it,** for
+The sources can move or remove files. `npm run audio:check` asks for the first byte of every listed address, tries a
+failed one once more, changes nothing, and exits with 1 if any fails. With the credentials in `.env.local` (or the
+environment) it also asks for recitation 7's address of every listed verse and checks it the same way; without them it
+says how many verses it did not check, and that alone is not a failure. **Nothing runs it unless you schedule it,** for
 example weekly:
 
 ```bash

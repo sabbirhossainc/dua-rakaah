@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { cachingFetch, matchAudio } from "./match-audio.mjs";
 import { INDEX_URL, chapterUrl } from "../lib/audio/source.js";
 import { textSha } from "../lib/audio/parts.js";
+import { TANZIL_URL, VERSE_COUNT } from "../lib/audio/quran.js";
 
 const require = createRequire(import.meta.url);
 const Database = require("better-sqlite3");
@@ -20,7 +21,16 @@ db.close();
 
 const item = (ID, ARABIC_TEXT = DUA_4) => ({ ID, ARABIC_TEXT, AUDIO: `http://www.hisnmuslim.com/audio/ar/${ID}.mp3` });
 const body = (data) => `﻿${JSON.stringify(data)}`;
+// A Quran-shaped download: surahs 1 to 113 with one verse and the rest in surah 114, all of an invented filler.
+// `first` replaces verse 1:1.
+const FILLER = "ظظظظغغغغذذذذخخخخثثثثضضضض";
+const quranText = ({ first = FILLER, verses = VERSE_COUNT } = {}) => {
+  const lines = Array.from({ length: verses }, (_, i) => (i < 113 ? `${i + 1}|1|${FILLER}` : `114|${i - 112}|${FILLER}`));
+  lines[0] = `1|1|${first}`;
+  return `${lines.join("\n")}\n\n# Copyright (C) Tanzil Project\n`;
+};
 const source = (...items) => ({
+  [TANZIL_URL]: quranText(),
   [INDEX_URL]: body({ English: [{ ID: 1 }] }),
   [chapterUrl(1)]: body({ x: items }),
 });
@@ -119,6 +129,30 @@ test("a reviewed rejection stays out on the next run", async (t) => {
   fs.writeFileSync(w.paths.reviewPath, JSON.stringify(rejects));
   await w.run(source(item(10)));
   assert.deepEqual(w.list(), []);
+});
+
+test("whole verses are listed, and losing them is named while the recording stays", async (t) => {
+  const w = workspace(t);
+  await w.run({ ...source(item(10)), [TANZIL_URL]: quranText({ first: DUA_4 }) });
+  const dua4 = () => w.list().find((r) => r.dua_id === 4 && r.part === 1);
+  assert.deepEqual(dua4().quran, { from: "1:1", to: "1:1", coverage: "full", approved: false });
+  assert.ok(w.lines.some((l) => l.startsWith("With Quran verses: 1 parts, 0 of them")));
+  w.lines.length = 0;
+  await w.run(source(item(10)));
+  assert.equal(dua4().quran, null);
+  assert.match(w.lines.join("\n"), /Lost its Quran verses: dua 4 part 1/);
+  assert.doesNotMatch(w.lines.join("\n"), /Lost its recording/);
+});
+
+test("a failed or truncated Quran download leaves the list as it was", async (t) => {
+  const w = workspace(t);
+  await w.run(source(item(10)));
+  const bytes = fs.readFileSync(w.paths.sourcesPath);
+  const missing = source(item(11));
+  delete missing[TANZIL_URL];
+  await assert.rejects(w.run(missing), /500/);
+  await assert.rejects(w.run({ ...source(item(11)), [TANZIL_URL]: quranText({ verses: 6000 }) }), /6000 verses.*--cached/s);
+  assert.deepEqual(fs.readFileSync(w.paths.sourcesPath), bytes);
 });
 
 test("the download cache is written, and reused only when asked", async (t) => {

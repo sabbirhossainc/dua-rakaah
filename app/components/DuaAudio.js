@@ -2,7 +2,10 @@
 
 import { useEffect } from "react";
 import { stopAudio, toggleAudio, useOnline, usePartAudio } from "@/lib/audio/player-store";
-import { t } from "@/lib/i18n";
+import { creditOf, partSources } from "@/lib/audio/sources";
+import { fmt, t } from "@/lib/i18n";
+import { usePreferences } from "@/lib/local/preferences-store";
+import { DEFAULT_RECITER_ID } from "@/lib/preferences";
 
 const LABEL_KEY = {
   idle: "audioPlay",
@@ -28,29 +31,34 @@ function Icon({ state }) {
   );
 }
 
-// The recitation control of one dua part (design D5). Offline it renders nothing at all.
-export default function DuaAudio({ partKey, urls, lang }) {
+// The recitation control of one dua part (design D5 of 4a, D7 of 4b). Offline it renders nothing at all.
+// `audio` is `{ key, duaId, part, urls, quran }` from lib/audio/lookup.js.
+export default function DuaAudio({ audio, lang }) {
   const online = useOnline();
-  const state = usePartAudio(partKey);
+  const { values } = usePreferences();
+  const sources = partSources(audio, values.reciter_id ?? DEFAULT_RECITER_ID);
+  const view = usePartAudio(audio.key, sources);
   // Leaving the page stops the sound.
-  useEffect(() => () => stopAudio(partKey), [partKey]);
+  useEffect(() => () => stopAudio(audio.key), [audio.key]);
   if (!online) return null;
-  const unavailable = state === "unavailable";
+  const unavailable = view.state === "unavailable";
+  const credit = creditOf(view, audio.quran);
   return (
     <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
       {/* aria-disabled, not disabled: the button keeps the keyboard focus when it becomes unavailable. */}
       <button
         type="button"
         aria-disabled={unavailable || undefined}
-        onClick={() => toggleAudio(partKey, urls)}
+        onClick={() => toggleAudio(audio.key, sources)}
         className={`flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[15px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
           unavailable ? "!cursor-default text-muted" : "text-primary"
         }`}
       >
-        {!unavailable && <Icon state={state} />}
-        <span>{t(lang, LABEL_KEY[state])}</span>
+        {!unavailable && <Icon state={view.state} />}
+        <span>{t(lang, LABEL_KEY[view.state])}</span>
       </button>
-      <p className="text-[13px] text-muted">{t(lang, "audioCredit")}</p>
+      <p className="text-[13px] text-muted">{fmt(lang, credit.label, credit.vars)}</p>
+      {credit.fullVerse && <p className="text-[13px] text-muted">{t(lang, "audioFullVerse")}</p>}
     </div>
   );
 }
