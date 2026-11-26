@@ -72,10 +72,3 @@ No two elements on a page SHALL share an ID.
 #### Scenario: No duplicate IDs
 - **WHEN** any category page is rendered
 - **THEN** every `id` attribute on the page is unique
-
-### Requirement: No audio until a working source exists
-Dua cards SHALL NOT render audio elements or audio controls. The stored `audio` URLs are dead.
-
-#### Scenario: Card without audio
-- **WHEN** a reader views any dua card
-- **THEN** the card contains no `<audio>` element and makes no request to `ihadis.com`

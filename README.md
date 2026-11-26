@@ -114,7 +114,7 @@ After one online visit, every page can be read with no network: the 20 category 
 
 The recordings come from [Hisn al-Muslim](https://www.hisnmuslim.com). Which recording belongs to which dua part is
 decided before the build, never while a reader is playing. The design is in
-`openspec/changes/add-dua-audio/design.md`.
+`openspec/changes/archive/2026-11-26-add-dua-audio/design.md`.
 
 **Do not launch audio until Hisn al-Muslim's usage terms are confirmed.** None were found on 2026-11-26. To withdraw
 audio, set `recordings` to `[]` in `data/audio-sources.json` and rebuild (running `audio:match` again would refill it).

@@ -193,7 +193,7 @@ Memorize is implemented by the OpenSpec change `add-memorize` (read its `design.
 
 Split into two changes, so that audio could start without Quran Foundation credentials.
 
-**4a: Hisn al-Muslim** (OpenSpec change `add-dua-audio`; read its `design.md` for the reasons). Built:
+**4a: Hisn al-Muslim** (OpenSpec change `add-dua-audio`, in `openspec/changes/archive/2026-11-26-add-dua-audio/`; read its `design.md` for the reasons). Built:
 
 - `npm run audio:match` matches each dua **part** against the source and writes `data/audio-sources.json` and a
   review report. A person's decisions go in `data/audio-review.json` (README, "Audio").
@@ -202,7 +202,7 @@ Split into two changes, so that audio could start without Quran Foundation crede
 - **Differences from sections 5.2 and 5.3:** the list is a JSON file, not an `audio_sources` table. It is keyed by dua,
   part number and a hash of the Arabic text. Only a **whole-text** likeness of 95% is accepted without a person (a
   contained match needs review). `ihadis` URLs are not listed. There is no `checked_at`, `verse_keys` or `coverage` yet.
-- **Open:** the review of the matches (task 3.1 of the change). Before it, 50 of 153 parts (47 of 140 duas) have a
+- **Open:** the review of the matches (the change is archived; its `tasks.md` lists what is left). Before the review, 50 of 153 parts (47 of 140 duas) have a
   recording.
 - **Decided 2026-11-26:** the automatic matches are used for now, and a Hafez will review them later. Nobody has
   listened to them yet. **Duas 2, 75, 124, 232 and 239 are held back,** because their written text differs from the
