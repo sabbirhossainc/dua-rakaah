@@ -1,6 +1,6 @@
 # Plan: ird-dua-app
 
-_Last updated 2026-11-26 (phase 3 done). This file covers only the work still ahead. Completed work (restructure into one
+_Last updated 2026-11-26 (phase 4a built, its match review still open). This file covers only the work still ahead. Completed work (restructure into one
 Next.js app, SQLite via `lib/db.js`, Next 16, Tailwind 4, ESLint flat config) is in git history, in commit `d1557b2`
 on branch `restructure/single-next-app`. Phase 1 (content pages) is the OpenSpec change `add-content-pages`, in
 `openspec/changes/archive/2026-11-25-add-content-pages/`._
@@ -18,8 +18,8 @@ modeled on duaruqyah.com.
    public/              icons and category images
 ```
 
-**Works today (after phase 1):**
-- `npm run lint`, `npm test` (20 unit tests), `npm run build` and `npm run smoke` (303 checks against a running server) pass.
+**Works today:**
+- `npm run lint`, `npm test`, `npm run build` and `npm run smoke` (checks against a running server) pass.
 - `/duas` is a category grid. `/duas/<slug>?cat=N` shows one category with its duas grouped by subcategory.
   `/bn/duas` and `/bn/duas/<slug>?cat=N` are the same pages in Bangla.
 - Dua cards show the title, intro text, Arabic text, transliteration, translation, closing text and reference.
@@ -31,6 +31,8 @@ modeled on duaruqyah.com.
 - Readers can delete their data at `/account`, and old removal records can be purged (phase 3).
 - Duas can be memorized (the third icon on each card: a "learned" checkbox and progress steps 0, 25, 50, 75, 100), and
   `/memorize` lists what the reader has started. It works offline and syncs the same way as bookmarks (phase 3).
+- Dua parts with a matched Hisn al-Muslim recording can be played while online (phase 4a). **Not ready to launch:** the
+  matches are not yet reviewed and the source's usage terms are unconfirmed.
 
 **Not done yet:**
 
@@ -43,7 +45,7 @@ modeled on duaruqyah.com.
 | `RightBar` settings (general, font, appearance) | Static. Only the language buttons work. |
 | LeftBar and Topbar text | Not translated. Only the content pages and the category list switch language. |
 | Bangla UI labels | Written by the assistant (`lib/i18n.js`). A Bangla speaker should review them. |
-| Audio | Every original audio URL is dead (404), and the `<audio>` elements were removed. See phase 4. |
+| Audio | Hisn al-Muslim recordings play on some duas (4a). The review of the matches, Quran.com audio and a reciter picker (4b) are open. See phase 4. |
 
 ### Content data model (`data/dua_main.sqlite`)
 
@@ -189,15 +191,33 @@ Memorize is implemented by the OpenSpec change `add-memorize` (read its `design.
 
 ### Phase 4: Audio
 
-1. **Data prep script:** match `dua_arabic` against Hisn al-Muslim and a Quran text with an open license (such as Tanzil).
-   A person reviews the matches, and the script writes the `audio_sources` table (section 5.3).
+Split into two changes, so that audio could start without Quran Foundation credentials.
+
+**4a: Hisn al-Muslim** (OpenSpec change `add-dua-audio`; read its `design.md` for the reasons). Built:
+
+- `npm run audio:match` matches each dua **part** against the source and writes `data/audio-sources.json` and a
+  review report. A person's decisions go in `data/audio-review.json` (README, "Audio").
+- A player on each matched part: hidden offline, next recording on failure, "Audio unavailable", the credit line.
+- `npm run audio:check` checks the listed URLs. **Nothing schedules it:** the operator does.
+- **Differences from sections 5.2 and 5.3:** the list is a JSON file, not an `audio_sources` table. It is keyed by dua,
+  part number and a hash of the Arabic text. Only a **whole-text** likeness of 95% is accepted without a person (a
+  contained match needs review). `ihadis` URLs are not listed. There is no `checked_at`, `verse_keys` or `coverage` yet.
+- **Open:** the review of the matches (task 3.1 of the change). Before it, 50 of 153 parts (47 of 140 duas) have a
+  recording.
+- **Decided 2026-11-26:** the automatic matches are used for now, and a Hafez will review them later. Nobody has
+  listened to them yet. **Duas 2, 75, 124, 232 and 239 are held back,** because their written text differs from the
+  recording's by a word or letter. Each hold is a `reject` line in `data/audio-review.json`; when the Hafez approves
+  one, change it to `approve` and run `npm run audio:match -- --cached`. Duas 125, 201 and 225 are below 100% too, but
+  differ only in spelling or spacing, and stay on.
+- The report to send is `.audio-cache/report-for-hafez.html` (local only, never committed). It was made before the
+  holds, and `audio:match` rewrites `report.html` but not this copy.
+
+**4b: Quran.com** (not started):
+
+1. Match `dua_arabic` against a Quran text with an open license (such as Tanzil) and add the verse keys to the list.
 2. `/api/audio/<dua_id>?reciter=<id>` and `/api/reciters`: Quran.com calls made from the server, cached for 7 days or less (section 5.4).
-3. Player:
-   - Tries candidates in order.
-   - States: hidden offline, playing, or disabled with "Audio unavailable".
-   - Shows the "Full verse recitation" label and the credit line.
+3. The "Full verse recitation" label and the Quran Foundation credit in the player.
 4. A reciter picker: "Audio / Reciter" in the `RightBar` Settings panel.
-5. A scheduled health check of all audio URLs.
 
 ### Before launch
 
@@ -205,8 +225,9 @@ Memorize is implemented by the OpenSpec change `add-memorize` (read its `design.
 - **Quran Foundation production access approved,** and the production credentials and URLs switched in together.
   Register the app (pre-live) at the **start of phase 4**, because the process for approval isn't documented
   and may take time. See "Getting access and calling the API" in section 5.4.
-- **Check Hisn al-Muslim's usage terms.**
-- Have the reviewed dua-to-audio matches signed off.
+- **Check Hisn al-Muslim's usage terms.** Audio must not be launched before this. None were found on 2026-11-26.
+- Review the dua-to-audio matches and have them signed off.
+- Name `www.hisnmuslim.com` in the Privacy Policy: it sees the reader's address when they press play.
 
 ## 4. Design: local-first sync
 
@@ -376,12 +397,16 @@ Pushes and pulls happen in one request. The request is safe to retry, because ea
   - `https://www.hisnmuslim.com/api/en/husn_en.json` lists 132 chapters and about 266 adhkar. Each has `ARABIC_TEXT` and its own audio,
     at `https://www.hisnmuslim.com/audio/ar/<id>.mp3`.
   - The audio returns 200 `audio/mpeg` over HTTPS with `Access-Control-Allow-Origin: *`.
-  - Chapter 126's JSON is malformed, and the API's own URLs are `http://` and need rewriting.
+  - Chapter 126's JSON was malformed (it parsed on 2026-11-26), and the API's own URLs are `http://` and need rewriting.
+    Item 153 has a broken audio address.
 - **Quran.com (Quran Foundation) Content API v4:**
   - Verse-by-verse recitations, with OAuth2 client credentials **used from the server only**.
   - Published developer terms, last updated 2026-11-20 (section 5.4).
 
 ### 5.2 How well Hisn al-Muslim matches
+
+_These figures are from the first test and count rows (dua parts): the 153 belong to 140 duas. The matching command's
+rule is stricter (phase 4a)._
 
 A test script compared our 153 Arabic duas with all 266 Hisn al-Muslim items, after normalizing the Arabic:
 
@@ -559,8 +584,9 @@ Sources: [developer journey](https://api-docs.quran.foundation/docs/developer-jo
 1. _(Resolved in phase 1: `?cat=N` stays, and `/duas` is a category grid.)_
 2. **What `/` should be:** it shows only "Home Page". A redirect to `/duas`, or a real home page?
 3. _(Resolved in `add-memorize`: five steps, 0 / 25 / 50 / 75 / 100. The server accepts any whole number from 0 to 100.)_
-4. **The audio UI:** hidden when offline, and disabled with "Audio unavailable" when online but broken. That reading was recorded but not confirmed.
-5. **Default reciter:** is recitation 7 really Alafasy, and is that the one you want?
-6. **Who reviews the dua-to-audio matches,** and do they need sign-off from someone with religious knowledge?
+4. _(Resolved in `add-dua-audio`: hidden when offline, and disabled with "Audio unavailable" when online but broken.)_
+5. **Default reciter:** recitation 7 is Mishari Rashid al-Afasy on Quran.com's public list (seen 2026-11-26; recheck
+   with credentials). Is that the one you want?
+6. _(Answered 2026-11-26: a Hafez reviews the dua-to-audio matches. Not done yet.)_
 7. **Is about 50% audio coverage enough for launch,** or should more providers be searched?
 8. **Hisn al-Muslim's usage terms** still need checking.

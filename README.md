@@ -30,9 +30,12 @@ lib/
   sync/               server side of sync: schema, merge rules, identity, the request handler
   local/              browser side: the IndexedDB store (Dexie), the sync runner, sign-in and sign-out
   turso.js, auth.js   the shared user-data database and Google sign-in (server only)
+  audio/              recordings: Arabic matching, the list builder, the review report and the player
 data/dua_main.sqlite  the content database (10 categories, 23 subcategories, 176 duas)
+data/audio-sources.json  the recordings each dua part may play (generated: do not edit by hand)
+data/audio-review.json   a person's approvals and rejections of those matches
 public/               icons and category images
-scripts/              smoke test, precache check, user-data setup and purge, and database compaction
+scripts/              smoke test, precache check, user-data setup and purge, database compaction, audio matching
 openspec/             specs, designs and tasks for each change
 plan.md               roadmap for the work still ahead
 ```
@@ -62,6 +65,8 @@ Open http://localhost:3000/duas.
 | `npm run db:user:init` | Creates the user-data tables in the database named by `TURSO_DATABASE_URL`. Safe to run again. Reads `.env.local`. |
 | `npm run db:user:purge` | Deletes removed bookmarks and applied change IDs that the server accepted more than 180 days ago. `npm run db:user:purge -- --dry-run` only reports the counts. Reads `.env.local`. |
 | `npm run db:vacuum` | Compacts `data/dua_main.sqlite`. It replaces the file only if the schema and every row stay identical. Stop the dev server first. |
+| `npm run audio:match` | Matches the dua texts with Hisn al-Muslim recordings and writes `data/audio-sources.json` and a review report. `npm run audio:match -- --cached` reuses the last download. See "Audio". |
+| `npm run audio:check` | Checks that every listed recording still answers with audio. Exits with an error if one does not. See "Audio". |
 
 ## URLs
 
@@ -99,11 +104,90 @@ After one online visit, every page can be read with no network: the 20 category 
 - **Check what a build will save:** `npm run check:precache` (after `npm run build`). It compares the worker's list
   with the database and fails if a category page is missing, or if audio or an `/api/` URL is in it.
 - **Updates.** A new build downloads in the background. A bar then offers "Reload", and the page never reloads by
-  itself. The list is re-downloaded on every build that changes the app or the database.
+  itself. The list is re-downloaded on every build that changes the app, the database or the list of recordings.
 - **Never saved:** audio files, anything under `/api/`, and other sites' files. The rules are in `lib/sw-rules.js`
   (each one has a test).
 - **If the worker ever misbehaves,** build with `SW_KILL=1` and deploy that build (`SW_KILL=1 npm run build` in bash, `$env:SW_KILL=1; npm run build` in PowerShell).
   Each device removes the worker and its saved files the next time it opens the app. Then redeploy a normal build.
+
+## Audio
+
+The recordings come from [Hisn al-Muslim](https://www.hisnmuslim.com). Which recording belongs to which dua part is
+decided before the build, never while a reader is playing. The design is in
+`openspec/changes/add-dua-audio/design.md`.
+
+**Do not launch audio until Hisn al-Muslim's usage terms are confirmed.** None were found on 2026-11-26. To withdraw
+audio, set `recordings` to `[]` in `data/audio-sources.json` and rebuild (running `audio:match` again would refill it).
+
+### What readers see
+
+- A dua part with a listed recording has a play and pause button under its Arabic text, with the credit
+  "Recitation: Hisn al-Muslim" (in Bangla on `/bn` pages). A part with no recording has nothing. The bookmark and
+  memorize pages have no audio.
+- One recording plays at a time, and leaving the page stops it. **Nothing is requested from the source until play is
+  pressed.** Pressing play lets the source see the reader's address.
+- A recording that errors, or has not started after 15 seconds, is skipped in favor of the part's next one. When none
+  works, the button reads "Audio unavailable" until the device reconnects.
+- **Offline, the buttons are hidden.** Audio is never saved on the device. Saved pages carry the list, so a changed list
+  reaches devices as a normal update.
+
+### Matching
+
+`npm run audio:match` downloads the source's chapters into `.audio-cache/`, compares the Arabic of every dua part with
+every item, and writes:
+
+- `data/audio-sources.json`, the shipped list: dua, part number (the part's position in the dua), a hash of the
+  part's Arabic text, and its recordings in play order. It holds no text from the source. Commit it.
+- `.audio-cache/report.html`, the review report. **Never commit `.audio-cache/`:** it holds the source's text, whose
+  usage terms are not known.
+
+Vowel marks, punctuation, spacing and spelling variants of a letter are ignored. A recording is accepted
+automatically only when the two **whole** texts are at least 95% alike. A dua that is merely contained in a longer
+recording, or the other way round, needs a person.
+
+If anything cannot be downloaded, or the review file has a mistake, the list is left unchanged. A chapter that
+arrives but cannot be read is skipped with a warning. Every part that loses its recording is named.
+
+### Review
+
+1. Run `npm run audio:match` and open `.audio-cache/report.html` in a browser (it plays the recordings, so you need a
+   connection).
+2. Listen to every recording accepted automatically below 100%, and to a sample of the others. Go through the pairs
+   under "Needs review".
+3. **Approve a recording only if it says what the card says: nothing missing and nothing extra.** Under each pair are
+   two lines, one to approve and one to reject. Copy the one you choose into `data/audio-review.json`, which is a
+   JSON list:
+
+   ```json
+   [
+     {"dua_id":4,"part":1,"item":10,"decision":"approve","text_sha":"…","item_sha":"…"},
+     {"dua_id":6,"part":1,"item":59,"decision":"reject","text_sha":"…","item_sha":"…","note":"recording is longer"}
+   ]
+   ```
+
+   `note` is optional. A decision overrides the automatic rule in both directions.
+4. Run `npm run audio:match -- --cached`, then `npm run audio:check`, and commit both files in `data/`.
+
+A decision holds only for the two texts that were reviewed. If either changes, it is reported as out of date and
+ignored (an out-of-date rejection still keeps the recording out), so decide again and replace the old line.
+
+### Checking the recordings
+
+The source can move or remove files. `npm run audio:check` asks for the first byte of every listed address, tries a
+failed one once more, changes nothing, and exits with 1 if any fails. **Nothing runs it unless you schedule it,** for
+example weekly:
+
+```bash
+# cron, Mondays at 06:00
+0 6 * * 1  cd /path/to/ird-dua-app && npm run audio:check
+```
+
+```powershell
+# Windows Task Scheduler, Mondays at 06:00
+schtasks /Create /TN "dua audio check" /SC WEEKLY /D MON /ST 06:00 /TR "cmd /c cd /d C:\path\to\ird-dua-app && npm run audio:check >> audio-check.log 2>&1"
+```
+
+To drop a dead recording, run `npm run audio:match`, or reject it in the review file, then rebuild and deploy.
 
 ## User data and sync
 
@@ -117,7 +201,7 @@ are in `openspec/changes/archive/2026-11-25-add-user-data-sync/design.md` (the s
 - **Settings.** The right bar (1536px and wider) has Font Settings (Arabic text size: small, medium, large, extra
   large; medium is the original 28px) and Appearance Settings (light or dark). A choice applies at once, works
   offline and follows the reader to every device after sign-in. There is also a stored `reciter_id` setting with no
-  control yet (the audio feature will use it). Three setting names exist: `theme`, `arabic_font`, `reciter_id`; they are
+  control yet (the Quran.com recordings will use it). Three setting names exist: `theme`, `arabic_font`, `reciter_id`; they are
   listed with their valid values in `lib/preferences.js`. Two devices that change the same setting keep the newest
   change. **At sign-in the account's existing value wins**; the device's value is used only for a setting the account
   does not have yet (a change with `if_absent: 1`). Sign-out returns the device to light and medium.
@@ -208,5 +292,6 @@ replay one. Sign-in with Google itself needs real credentials and has to be chec
 
 `dua.id` values must stay stable, because bookmarks (and later memorize) refer to them. Rows that
 share an `id` are the parts of one dua, and their order in the table is the only record of part order, so keep it.
-After replacing the file, run `npm run db:vacuum` and `npm run smoke`.
+After replacing the file, run `npm run db:vacuum`, `npm run audio:match` (a part whose Arabic text changed shows no
+recording until it is matched again) and `npm run smoke`.
 >>>>>>> restructure/single-next-app

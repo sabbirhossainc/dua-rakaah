@@ -2,6 +2,8 @@
 //   npm run build && npm start      (in one terminal)
 //   npm run smoke                   (in another; BASE_URL defaults to http://localhost:3000)
 // Expected values come from data/dua_main.sqlite, not from the app under test.
+import crypto from "node:crypto";
+import fs from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { categorySlug } from "../lib/content.js";
@@ -69,6 +71,18 @@ const catByName = (name) => categories.find((c) => c.cat_name_en === name);
 const sleep = catByName("Sleep");
 const morning = catByName("Morning & Evening");
 
+// The recordings each category page may mention: those listed for a part whose stored Arabic is still the matched one.
+const listed = JSON.parse(fs.readFileSync(new URL("../data/audio-sources.json", import.meta.url), "utf8")).recordings;
+function expectedAudio(catId) {
+  const urls = new Set();
+  for (const r of listed) {
+    const row = db.prepare("SELECT cat_id, dua_arabic a FROM dua WHERE id = ? ORDER BY rowid LIMIT 1 OFFSET ?").get(r.dua_id, r.part - 1);
+    if (row?.cat_id !== catId || !row.a) continue;
+    if (crypto.createHash("sha256").update(row.a).digest("hex") === r.text_sha) for (const c of r.candidates) urls.add(c.url);
+  }
+  return [...urls].sort();
+}
+
 // ---- landing pages ----
 for (const lang of ["en", "bn"]) {
   const p = lang === "bn" ? "/bn/duas" : "/duas";
@@ -115,8 +129,13 @@ for (const lang of ["en", "bn"]) {
     const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
     check(`${p}: unique ids`, dupes.length === 0, [...new Set(dupes)].join(","));
     check(`${p}: no <audio>, no ihadis.com`, !html.includes("<audio") && !html.includes("ihadis.com"));
+    // Anywhere in the page, including the data React sends for the controls, where quotes are escaped.
+    const audioUrls = [...new Set(html.match(/https?:\/\/[^"'\\\s<>]*\.mp3/g) ?? [])].sort();
+    const wanted = expectedAudio(c.cat_id);
+    check(`${p}: exactly the listed recording URLs (${wanted.length})`, JSON.stringify(audioUrls) === JSON.stringify(wanted), `found ${audioUrls.length}`);
     const text = visibleText(html);
     check(`${p}: no "Section: Sections"`, !text.includes("Section: Sections"));
+    check(`${p}: no audio control in the server HTML`, !/Play recitation|Recitation: Hisn|তিলাওয়াত চালান/.test(noScripts(html)));
     check(`${p}: no null/undefined text`, !/\b(null|undefined)\b/i.test(text), /.{20}\b(null|undefined)\b.{20}/i.exec(text)?.[0] ?? "");
     if (lang === "bn") check(`${p}: lang="bn"`, html.includes('lang="bn"'));
     const arabicTags = [...html.matchAll(/<p[^>]*lang="ar"[^>]*>/g)].map((m) => m[0]);
@@ -126,6 +145,12 @@ for (const lang of ["en", "bn"]) {
     const missing = rows.filter((r2) => !decoded.includes(r2.a));
     check(`${p}: every stored Arabic text appears unchanged (${rows.length})`, missing.length === 0 && arabicTags.length === rows.length, `missing ${missing.length}, blocks ${arabicTags.length}`);
   }
+}
+
+// ---- the other saved pages have no audio either ----
+for (const p of ["/", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"]) {
+  const { body } = await get(p);
+  check(`${p}: no <audio>, no ihadis.com, no recording URL`, !body.includes("<audio") && !body.includes("ihadis.com") && !body.includes(".mp3"));
 }
 
 // ---- specific scenarios ----

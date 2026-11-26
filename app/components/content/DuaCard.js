@@ -1,4 +1,5 @@
 import Image from "next/image";
+import DuaAudio from "@/app/components/DuaAudio";
 import DuaIcons from "@/app/components/DuaIcons";
 import { t } from "@/lib/i18n";
 
@@ -47,6 +48,7 @@ export default function DuaCard({ dua, lang }) {
                   {part.arabic}
                 </p>
               )}
+              {part.audio && <DuaAudio partKey={part.audio.key} urls={part.audio.urls} lang={lang} />}
               {part.transliteration && (
                 <Labeled label={t(lang, "transliteration")}>{part.transliteration}</Labeled>
               )}

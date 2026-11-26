@@ -13,6 +13,8 @@ import {
   getDuasByCategory,
   getSubcategories,
 } from "@/lib/db";
+import { withRecordings } from "@/lib/audio/lookup";
+import audioSources from "@/data/audio-sources.json";
 import SubcategorySection from "@/app/components/content/SubcategorySection";
 
 function safeDecode(value) {
@@ -60,7 +62,7 @@ export default async function CategoryPage({ lang, params, searchParams }) {
   const { category } = result;
   const sections = groupBySubcategory(
     getSubcategories(category.cat_id),
-    groupDuas(getDuasByCategory(category.cat_id), lang)
+    withRecordings(groupDuas(getDuasByCategory(category.cat_id), lang), audioSources)
   );
 
   return (

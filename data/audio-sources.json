@@ -1,0 +1,740 @@
+{
+  "version": 1,
+  "recordings": [
+    {
+      "dua_id": 6,
+      "part": 1,
+      "text_sha": "c011e5e12016a302e1e685476b566ff0c281f9650e38b6c88dfe95b0dd077bd2",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 59,
+          "url": "https://www.hisnmuslim.com/audio/ar/59.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 9,
+      "part": 1,
+      "text_sha": "9cb9b37f45b974c62b87a3e67a488db9ca78393fafbc79c0e8a16cef6e786190",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 116,
+          "url": "https://www.hisnmuslim.com/audio/ar/116.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 13,
+      "part": 1,
+      "text_sha": "dfeb6c2a71d0a463a7c348a9ba8185b29c67cbffa999f1fbbb64c9a8f7711187",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 61,
+          "url": "https://www.hisnmuslim.com/audio/ar/61.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 21,
+      "part": 1,
+      "text_sha": "5f540dcdfae53ef543e77d8ef83385da5e018e30e8674cb5dfb1c55edf2223b6",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 121,
+          "url": "https://www.hisnmuslim.com/audio/ar/121.mp3",
+          "score": 1,
+          "approved": false
+        },
+        {
+          "provider": "hisnmuslim",
+          "item": 137,
+          "url": "https://www.hisnmuslim.com/audio/ar/137.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 26,
+      "part": 1,
+      "text_sha": "515a43a3ff4b20214032d7e1bdd31b906724895dd77b0ff6ffd840db08d80059",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 240,
+          "url": "https://www.hisnmuslim.com/audio/ar/240.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 32,
+      "part": 2,
+      "text_sha": "864718f4ce7f07029409656115404850b820fc94fc2701d516439dc9a4626e55",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 245,
+          "url": "https://www.hisnmuslim.com/audio/ar/245.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 47,
+      "part": 1,
+      "text_sha": "60715d2e9f47d443bec696a37281b37b3290846ffed72a5a7d2d3f599b4e0102",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 124,
+          "url": "https://www.hisnmuslim.com/audio/ar/124.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 48,
+      "part": 1,
+      "text_sha": "ec1ba8b161adbbd1ff2284199100c2baf5c1ab78338361b8ab6c11a2d6826079",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 154,
+          "url": "https://www.hisnmuslim.com/audio/ar/154.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 53,
+      "part": 1,
+      "text_sha": "22b6cd8693b7154f00915c929cb9de20ebf622c578e3f9d8f701a3e40511bdf5",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 39,
+          "url": "https://www.hisnmuslim.com/audio/ar/39.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 56,
+      "part": 1,
+      "text_sha": "b86d709c9d06286219c26dd0dfaad22da4d22c4b2b04a62bdeb3cee908c2df40",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 63,
+          "url": "https://www.hisnmuslim.com/audio/ar/63.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 58,
+      "part": 1,
+      "text_sha": "f3e827ccc47bcbe373c52b3b6e8bb63b8d11a1fd0360dda55fced3928bee69b7",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 65,
+          "url": "https://www.hisnmuslim.com/audio/ar/65.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 59,
+      "part": 1,
+      "text_sha": "333d3ec1dc8be5ba928031db3f22684fed133a9766d6e4ee83792b3464fe3870",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 13,
+          "url": "https://www.hisnmuslim.com/audio/ar/13.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 74,
+      "part": 1,
+      "text_sha": "41002c41ece91247b1910435f0778b159aa6d585ba67e81fc93d06b2fb077ee2",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 154,
+          "url": "https://www.hisnmuslim.com/audio/ar/154.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 116,
+      "part": 1,
+      "text_sha": "7fdca1ed5970fce4cace29cced1e0cdc3e5de46c49a4e248ca10ff9a7700e20d",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 53,
+          "url": "https://www.hisnmuslim.com/audio/ar/53.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 119,
+      "part": 1,
+      "text_sha": "131aaf2552854ca4149165602d0442a542f75bfe08665f5da35f70d61d15cd2f",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 88,
+          "url": "https://www.hisnmuslim.com/audio/ar/88.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 123,
+      "part": 1,
+      "text_sha": "515a43a3ff4b20214032d7e1bdd31b906724895dd77b0ff6ffd840db08d80059",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 240,
+          "url": "https://www.hisnmuslim.com/audio/ar/240.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 123,
+      "part": 3,
+      "text_sha": "9ab0b189008c27f0fad602c4f2e87e4936360b5ea12d7468db74fddad77472c5",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 241,
+          "url": "https://www.hisnmuslim.com/audio/ar/241.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 123,
+      "part": 5,
+      "text_sha": "864718f4ce7f07029409656115404850b820fc94fc2701d516439dc9a4626e55",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 245,
+          "url": "https://www.hisnmuslim.com/audio/ar/245.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 125,
+      "part": 1,
+      "text_sha": "5ebde6460fee5c4a7f3cce2d061601d01c6f323354daa001510592c68f919800",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 100,
+          "url": "https://www.hisnmuslim.com/audio/ar/100.mp3",
+          "score": 0.984,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 130,
+      "part": 1,
+      "text_sha": "2fd599ee532e60b12572affb63f8d7e03043cb9231d0af0a0711ae432f1262e5",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 85,
+          "url": "https://www.hisnmuslim.com/audio/ar/85.mp3",
+          "score": 1,
+          "approved": false
+        },
+        {
+          "provider": "hisnmuslim",
+          "item": 109,
+          "url": "https://www.hisnmuslim.com/audio/ar/109.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 131,
+      "part": 1,
+      "text_sha": "07bed93b292e7f364260562818a0fbe325068cd2ea886bbcdd1d32cca85c7c6c",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 84,
+          "url": "https://www.hisnmuslim.com/audio/ar/84.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 133,
+      "part": 1,
+      "text_sha": "06115c93bb9f298a4c3253d9df61d285999922ef94d52e39c9516bb21403b8c7",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 216,
+          "url": "https://www.hisnmuslim.com/audio/ar/216.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 140,
+      "part": 1,
+      "text_sha": "48d811abc4851461ef403913537c486f9200e68bb6c71f158ebbb24e4378e8ca",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 209,
+          "url": "https://www.hisnmuslim.com/audio/ar/209.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 200,
+      "part": 1,
+      "text_sha": "515a43a3ff4b20214032d7e1bdd31b906724895dd77b0ff6ffd840db08d80059",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 240,
+          "url": "https://www.hisnmuslim.com/audio/ar/240.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 200,
+      "part": 3,
+      "text_sha": "9ab0b189008c27f0fad602c4f2e87e4936360b5ea12d7468db74fddad77472c5",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 241,
+          "url": "https://www.hisnmuslim.com/audio/ar/241.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 201,
+      "part": 1,
+      "text_sha": "baf29ac7db54da11e7bf39d2efcf218f90618b2003fe9edd6e8bc70481cc3f69",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 100,
+          "url": "https://www.hisnmuslim.com/audio/ar/100.mp3",
+          "score": 0.984,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 202,
+      "part": 1,
+      "text_sha": "5881e431d05d254aa3f14e707bc692daaa54d7047010f93e9015ea65e25a6356",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 101,
+          "url": "https://www.hisnmuslim.com/audio/ar/101.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 208,
+      "part": 1,
+      "text_sha": "eae1e28459b16acd892a1c1818b930600d6b0668b2f8dcae4680b124cf8b9b9e",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 105,
+          "url": "https://www.hisnmuslim.com/audio/ar/105.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 210,
+      "part": 1,
+      "text_sha": "3540825c257f29dd89c9c54896b9b5b4edfe7554f48cfb82f4dab77484df59c0",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 103,
+          "url": "https://www.hisnmuslim.com/audio/ar/103.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 212,
+      "part": 1,
+      "text_sha": "8cb3e22bc0d78d238632873bd96a944cc8a82372f3ae60d030c369a6b9b76868",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 107,
+          "url": "https://www.hisnmuslim.com/audio/ar/107.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 214,
+      "part": 1,
+      "text_sha": "149e661dc0e576cef363488c2e77ff7973817cb172f7c5e23a3e0cc4d6b41277",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 102,
+          "url": "https://www.hisnmuslim.com/audio/ar/102.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 215,
+      "part": 1,
+      "text_sha": "48e671db619d0f16a263655309ab92a766199c3925af48da0858220694adfaaf",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 104,
+          "url": "https://www.hisnmuslim.com/audio/ar/104.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 217,
+      "part": 1,
+      "text_sha": "71ddc13e9d987b9ef3e177a0e6812e6d03b616040325792a0a88f7f2ccafb0e0",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 108,
+          "url": "https://www.hisnmuslim.com/audio/ar/108.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 218,
+      "part": 1,
+      "text_sha": "4db295a33759e86138a5a01b7dd9e0409bb84a319f5d53c3b97fa5309036e4f3",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 85,
+          "url": "https://www.hisnmuslim.com/audio/ar/85.mp3",
+          "score": 1,
+          "approved": false
+        },
+        {
+          "provider": "hisnmuslim",
+          "item": 109,
+          "url": "https://www.hisnmuslim.com/audio/ar/109.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 219,
+      "part": 1,
+      "text_sha": "f2e3b4281ae4cfa6f36a7521cc30b64615ee420c2def410746a7da383c4cdc0d",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 247,
+          "url": "https://www.hisnmuslim.com/audio/ar/247.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 221,
+      "part": 1,
+      "text_sha": "ec594382cdb7a2ccfb8269c46840acb3002078319382a70ed42bd194e28b2c04",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 111,
+          "url": "https://www.hisnmuslim.com/audio/ar/111.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 223,
+      "part": 1,
+      "text_sha": "e4da77a637ee582d05285a155e7b886a04512b6eb59763de1d5ca96250eee3de",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 112,
+          "url": "https://www.hisnmuslim.com/audio/ar/112.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 224,
+      "part": 1,
+      "text_sha": "64fbe35cc28fc411296d7cf5d1e29fe31ef88bdd46ef4a7a733f483cb398a4c0",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 2,
+          "url": "https://www.hisnmuslim.com/audio/ar/2.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 225,
+      "part": 1,
+      "text_sha": "2ec8de0a8e290a0f6de7816a57169f5c90d47b261c710a98c9f5f2d501e29eff",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 4,
+          "url": "https://www.hisnmuslim.com/audio/ar/4.mp3",
+          "score": 0.998,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 226,
+      "part": 1,
+      "text_sha": "b7224eb0ad7f3479875092d2f07d8524c6e2762f64a40c4a4748a53382aa3527",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 1,
+          "url": "https://www.hisnmuslim.com/audio/ar/1.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 227,
+      "part": 1,
+      "text_sha": "614031f2c85748d26b2803e173ea9eca3f8e8ee557f3583e9982afea020231a7",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 3,
+          "url": "https://www.hisnmuslim.com/audio/ar/3.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 229,
+      "part": 1,
+      "text_sha": "bdfd9adcae47073031994f2dcc150a32ab7c4c75d8a1a0ad060cce894f8f8d09",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 193,
+          "url": "https://www.hisnmuslim.com/audio/ar/193.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 231,
+      "part": 1,
+      "text_sha": "0d23db54d8378ed4ad64c042a7f4bc9e939142172a153671c6eb3bce4950a3e1",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 5,
+          "url": "https://www.hisnmuslim.com/audio/ar/5.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 233,
+      "part": 1,
+      "text_sha": "18c98fa3acc7a283648e5d55b34e3109caa04db6d60bd75593f5b87c822dd996",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 7,
+          "url": "https://www.hisnmuslim.com/audio/ar/7.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 234,
+      "part": 1,
+      "text_sha": "94abe1615b3f76cd0e6a6dcade93386f7903326cf4e00f985f6faa60989e813f",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 9,
+          "url": "https://www.hisnmuslim.com/audio/ar/9.mp3",
+          "score": 1,
+          "approved": false
+        },
+        {
+          "provider": "hisnmuslim",
+          "item": 12,
+          "url": "https://www.hisnmuslim.com/audio/ar/12.mp3",
+          "score": 1,
+          "approved": false
+        },
+        {
+          "provider": "hisnmuslim",
+          "item": 210,
+          "url": "https://www.hisnmuslim.com/audio/ar/210.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 237,
+      "part": 1,
+      "text_sha": "1477ba85da8b85a1967d9d496b39318e2c16db64c3194a0c9312ef1c4441b948",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 8,
+          "url": "https://www.hisnmuslim.com/audio/ar/8.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 241,
+      "part": 1,
+      "text_sha": "3d218306a6015b749c76d626fbe3b0ac36d8b0603128ea114822521f720d43b7",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 17,
+          "url": "https://www.hisnmuslim.com/audio/ar/17.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 245,
+      "part": 1,
+      "text_sha": "4f53b4f688aa72d82a6df025c307cff4e2ed836918f95c97f185bf98411f2480",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 10,
+          "url": "https://www.hisnmuslim.com/audio/ar/10.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 246,
+      "part": 1,
+      "text_sha": "b9c094071a52749920a3e0624d2f980951915db284649c3ae052a6e4c8841468",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 11,
+          "url": "https://www.hisnmuslim.com/audio/ar/11.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    },
+    {
+      "dua_id": 249,
+      "part": 1,
+      "text_sha": "33c64713486c55cce2c080f5b0f7a46a326e03e9d9a7d7eaacb6b99371efdc3e",
+      "candidates": [
+        {
+          "provider": "hisnmuslim",
+          "item": 53,
+          "url": "https://www.hisnmuslim.com/audio/ar/53.mp3",
+          "score": 1,
+          "approved": false
+        }
+      ]
+    }
+  ]
+}

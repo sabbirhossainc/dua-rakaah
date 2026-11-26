@@ -12,7 +12,9 @@
     "check:precache": "node scripts/check-precache.mjs",
     "db:vacuum": "node scripts/vacuum-content-db.mjs",
     "db:user:init": "node --env-file-if-exists=.env.local scripts/init-user-db.mjs",
-    "db:user:purge": "node --env-file-if-exists=.env.local scripts/purge-user-db.mjs"
+    "db:user:purge": "node --env-file-if-exists=.env.local scripts/purge-user-db.mjs",
+    "audio:match": "node scripts/match-audio.mjs",
+    "audio:check": "node scripts/check-audio.mjs"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

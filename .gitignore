@@ -37,3 +37,6 @@ next-env.d.ts
 
 # local user-data database (development)
 /data/user-dev.db*
+
+# downloaded recording texts and the review report (npm run audio:match); never commit them
+/.audio-cache/
