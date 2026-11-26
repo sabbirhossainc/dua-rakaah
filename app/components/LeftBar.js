@@ -8,6 +8,7 @@ export default function LeftBar() {
       icon: "home",
       alt: "home",
       href: "/",
+      hrefs: { en: "/", bn: "/bn" },
     },
     {
       id: "2",

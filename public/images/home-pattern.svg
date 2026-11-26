@@ -1,0 +1,13 @@
+<!-- An eight-point star lattice drawn for this app. Used as a mask: only the shapes' opacity matters. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" fill="none" stroke="#000" stroke-width="1.5">
+  <!-- The star in the middle: two squares, one turned 45 degrees. -->
+  <path d="M30 30h36v36H30z"/>
+  <path d="M48 22.54 73.46 48 48 73.46 22.54 48z"/>
+  <circle cx="48" cy="48" r="7"/>
+  <!-- Links to the neighbouring tiles. -->
+  <path d="M48 0v22.54M48 73.46V96M0 48h22.54M73.46 48H96"/>
+  <!-- A quarter of a smaller star in each corner; four tiles make one. -->
+  <path d="M0 12h12V0M84 0v12h12M96 84H84v12M12 96V84H0"/>
+  <path d="M16.97 0 0 16.97M79.03 0 96 16.97M96 79.03 79.03 96M16.97 96 0 79.03"/>
+  <path d="M12 12 30 30M84 12 66 30M84 84 66 66M12 84l18-18"/>
+</svg>

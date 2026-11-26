@@ -1,5 +1,5 @@
+import HomePage from "@/app/components/home/HomePage";
+
 export default function Home() {
-  return (
-    <div className="justify-center flex items-center text-7xl">Home Page</div>
-  );
+  return <HomePage lang="en" />;
 }

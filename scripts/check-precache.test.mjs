@@ -9,7 +9,7 @@ const categories = [
   { cat_id: 6, cat_name_en: "Sleep" },
 ];
 const staticFiles = ["chunks/a.js", "chunks/b.css", "media/f.woff2", "chunks/a.js.map"];
-const publicFiles = ["icons/home.svg", "images/sleep.svg", "notes.txt"];
+const publicFiles = ["icons/home.svg", "images/sleep.svg", "images/home-pattern.svg", "notes.txt"];
 
 function goodUrls() {
   return [
@@ -20,6 +20,7 @@ function goodUrls() {
     "/_next/static/media/f.woff2",
     "/icons/home.svg",
     "/images/sleep.svg",
+    "/images/home-pattern.svg",
   ];
 }
 const run = (urls) => checkPrecache({ urls, categories, staticFiles, publicFiles });
@@ -54,6 +55,14 @@ test("missing pages, fonts, scripts and images are reported, and source maps and
     "missing build file /_next/static/media/f.woff2",
     "missing page /offline",
     "missing public file /icons/home.svg",
+  ]);
+});
+
+test("a list without the home page pattern fails, also when the file itself is gone", () => {
+  const urls = goodUrls().filter((u) => u !== "/images/home-pattern.svg");
+  const without = publicFiles.filter((f) => f !== "images/home-pattern.svg");
+  assert.deepEqual(checkPrecache({ urls, categories, staticFiles, publicFiles: without }), [
+    "missing the home page pattern /images/home-pattern.svg",
   ]);
 });
 

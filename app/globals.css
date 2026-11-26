@@ -31,12 +31,94 @@
   --color-muted: #9aa1a9;
   --color-dua-bg: #23282d;
   --color-icon-bg: #2b3238;
+  --color-pattern: rgb(200 210 220 / 0.07);
+  --color-accent-text: #3cc47a;
+  --color-subtle: #a7aeb6;
   color-scheme: dark;
+}
+
+/* Home page (design D10): the background pattern, and text colors that keep 4.5:1 on a card in both themes. */
+:root:not([data-theme="dark"]) {
+  --color-pattern: rgb(31 164 91 / 0.16);
+  --color-accent-text: #0f7a41;
+  --color-subtle: #5c636b;
 }
 
 body {
   background-color: var(--color-page);
   color: var(--color-ink);
+}
+
+/*
+  The home page. Its pattern is one tile used as a mask over a full-page layer, so one file serves both themes and
+  follows data-theme with no flash. The layer hangs on <body> because the z-index contexts of the layout would
+  otherwise lift it over the side bars.
+*/
+body:has([data-home])::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--color-pattern);
+  mask: url("/images/home-pattern.svg") repeat;
+  mask-size: 96px 96px;
+}
+
+/*
+  From 976px the layout fixes its frame to the window, which leaves a long page with nothing that scrolls. The home
+  page is long, so there the frame stays in the document and the page scrolls as usual.
+*/
+@media (min-width: 976px) {
+  body:has([data-home]) [data-shell] {
+    position: relative;
+  }
+}
+
+/* From 1440px to 1535px the layout puts page content in its 350px column only. The home page takes the rest too. */
+@media (min-width: 1440px) and (max-width: 1535.98px) {
+  div:has(> [data-home]) {
+    grid-column: 2 / -1;
+  }
+}
+
+.home-accent {
+  color: var(--color-accent-text);
+}
+
+.home-subtle {
+  color: var(--color-subtle);
+}
+
+/* White text needs a darker green than --color-primary to reach 4.5:1, in both themes. */
+.home-button {
+  background-color: #0f7a41;
+  color: #fff;
+}
+
+/* The category cards are the /duas ones, unchanged. Inside a card they need their own shade and readable small text. */
+[data-home] [data-category-card] {
+  background-color: var(--color-dua-bg);
+}
+
+[data-home] [data-category-card]:hover {
+  background-color: var(--color-icon-bg);
+}
+
+[data-home] [data-category-card] .text-gray-400 {
+  color: var(--color-subtle);
+}
+
+[data-home] [data-category-card] > div:first-child {
+  background-color: var(--color-surface);
+}
+
+[data-home] [data-category-card] > div:last-child {
+  border-color: var(--color-line);
+}
+
+[data-home] [data-home-card="categories"] > div {
+  padding-bottom: 0;
 }
 
 /*

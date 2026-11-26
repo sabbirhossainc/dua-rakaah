@@ -8,6 +8,7 @@ file that ships with the app. There is no separate API server.
 
 ```
 app/                  routes and components
+  page.js, bn/page.js     the home page           /, /bn (cards in components/home/)
   duas/               English pages           /duas, /duas/<slug>?cat=N
   bn/duas/            Bangla pages            /bn/duas, /bn/duas/<slug>?cat=N
   components/         shared UI; components/content/ holds the dua cards and category pages
@@ -27,7 +28,11 @@ lib/
   turso.js, auth.js   the shared user-data database and Google sign-in (server only)
   audio/              recordings: Arabic and Quran matching, the list builder, the review report and the player
   quran/              the Quran Foundation client, the recitation service and its route handlers (server only)
+  prayer/             prayer times, the current waqt, dates, and the reader's place (all computed in the browser)
+  home/               the home page's daily duas and hadith
 data/dua_main.sqlite  the content database (10 categories, 23 subcategories, 176 duas)
+data/bd-districts.json   Bangladesh's 64 district towns with coordinates (from GeoNames)
+data/home-picks.json     the duas and hadith quotes picked by hand for the home page
 data/audio-sources.json  the Quran verses and recordings each dua part may play (generated: do not edit by hand)
 data/audio-review.json   a person's approvals and rejections of those matches
 public/               icons and category images
@@ -45,7 +50,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000/duas.
+Open http://localhost:3000.
 
 ## Commands
 
@@ -68,6 +73,7 @@ Open http://localhost:3000/duas.
 
 | URL | Page |
 |---|---|
+| `/`, `/bn` | The home page, in English and Bangla: prayer times and a countdown, the Hijri date, duas, categories, a hadith, donation |
 | `/duas` | Category grid |
 | `/duas/<slug>?cat=<id>` | One category, with its duas grouped by subcategory |
 | `/bn/duas`, `/bn/duas/<slug>?cat=<id>` | The same pages in Bangla |
@@ -78,8 +84,31 @@ Open http://localhost:3000/duas.
 - `cat` decides which category is shown. The slug is only for readability: a wrong slug, or no `cat`, redirects
   (308) to the canonical URL, and an unknown category returns 404.
 - The language comes from the URL only. English has no prefix and Bangla lives under `/bn`. The language buttons
-  in the Settings panel (visible at 1536px and wider) switch between the two.
+  in the Settings panel (visible at 1536px and wider) switch between the two; `/` and `/bn` are each other's pair.
 - A dua that is stored across several rows in the database is shown as one card with several parts.
+
+## Home page
+
+`/` and `/bn` are built once, with the app, so every reader gets the same HTML. Their cards, in order: location and
+time, today, prayer times, countdown, duas, categories, hadith, donation. One column below 1280px, two from there.
+The design is in `openspec/changes/archive/2026-11-26-add-home-page/design.md`.
+
+- **Where the times come from.** The [adhan](https://github.com/batoulapps/adhan-js) library (MIT) computes them
+  **in the browser**, by the University of Islamic Sciences, Karachi method with the Hanafi Asr. No service is asked,
+  so they work offline. They are a calculation: the card tells readers to check with their local mosque. Between
+  sunrise and Dhuhr no waqt is current, and during Fajr the countdown runs to sunrise. Where a time cannot be
+  computed (near the poles), the page says so and shows no countdown.
+- **Place.** Dhaka until the reader chooses a district town or presses "Use my location" (which needs HTTPS or
+  `localhost`). The browser is asked for the position only when that button is pressed. A picked town is shown in its
+  own time zone; the default and "My location" are shown in the device's.
+- **Hijri date.** The Umm al-Qura calendar, which the reader can move one day back or forward.
+- **Stored on the device only.** `localStorage["dua-home"]` holds the place (a town, or a position rounded to 3
+  decimals) and the Hijri adjustment. It is never sent to the server or synced, and "Delete my data" removes it.
+  The Privacy Policy must say this before launch.
+- **Duas and hadith.** `data/home-picks.json` lists them by `dua.id`. Which ones show changes with the date. A quote
+  with no text in a page's language is left out of that page. **The list still has to be reviewed** before launch.
+- **Town coordinates** are from [GeoNames](https://www.geonames.org/), used under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The Bangla town names and labels still need review.
 
 ## Hosting
 
@@ -90,15 +119,17 @@ Static-only hosting (`output: 'export'`) will not work. A service worker needs H
 ## Offline use
 
 After one online visit, every page can be read with no network: the 20 category pages in both languages, `/duas`,
-`/bn/duas`, `/`, `/support`, `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account`, `/bn/account`, and the icons, images, scripts, styles and fonts they use. A service worker
-(Serwist, `app/sw.js`) saves them. Anything else shows `/offline`, a short page that links back to `/duas`.
+`/bn/duas`, `/`, `/bn`, `/support`, `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account`, `/bn/account`, and the icons, images, scripts, styles and fonts they use. A service worker
+(Serwist, `app/sw.js`) saves them. Anything else shows `/offline`, a short page that links back to `/duas`. The home
+page's prayer times, countdown, Hijri date and town list work offline too.
 
 - **Production builds only.** `npm run dev` never registers the worker, and removes one left on the same
   address by an earlier run. A worker belongs to an address (`localhost:3000`), so test production builds on
   another port: `npm run build`, then `npm start -- -p 3100`. To check offline use, open `/duas`, wait a few
   seconds, stop the server, and open other pages.
 - **Check what a build will save:** `npm run check:precache` (after `npm run build`). It compares the worker's list
-  with the database and fails if a category page is missing, or if audio or an `/api/` URL is in it.
+  with the database and fails if a category page or the home page's background is missing, or if audio or an `/api/`
+  URL is in it.
 - **Updates.** A new build downloads in the background. A bar then offers "Reload", and the page never reloads by
   itself. The list is re-downloaded on every build that changes the app, the database or the list of recordings.
 - **Never saved:** audio files, anything under `/api/`, and other sites' files. The rules are in `lib/sw-rules.js`
@@ -299,7 +330,7 @@ Environment variables (server only: none may start with `NEXT_PUBLIC_`). Copy `.
 
 A reader, signed in or not, can erase their data at `/account` after a confirmation. The server deletes the account,
 every anonymous device merged into it and all their records in one transaction; the device is cleared and starts
-again as a new anonymous device. The reader's other devices are answered `410` at their next sync, and clear
+again as a new anonymous device (the home page's saved place and Hijri adjustment are removed with the rest). The reader's other devices are answered `410` at their next sync, and clear
 themselves. Signing in with the same Google account later starts a new, empty account, and changes a device had set
 aside at an offline sign-out before the deletion are not stored in it. The server keeps only deletion markers: the
 time, with a SHA-256 hash of the account ID or with a deleted anonymous owner's random ID. The design is in

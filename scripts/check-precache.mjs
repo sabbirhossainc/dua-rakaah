@@ -15,6 +15,8 @@ const STATIC_EXT = /\.(?:js|css|woff2)$/i;
 const IMAGE_EXT = /\.(?:svg|png|jpe?g|webp|avif|gif|ico)$/i;
 const AUDIO_VIDEO_EXT = /\.(?:mp3|m4a|aac|ogg|oga|opus|wav|flac|weba|mp4|webm)(?:\?|$)/i;
 
+export const HOME_PATTERN = "/images/home-pattern.svg";
+
 /** The urls of the manifest entries in the built worker. They look like {url:"/x",revision:"y"} or {revision:"y",url:"/x"}. */
 export function parseWorker(text) {
   const urls = [];
@@ -45,6 +47,9 @@ export function checkPrecache({ urls, categories, staticFiles, publicFiles }) {
   for (const file of publicFiles.filter((f) => IMAGE_EXT.test(f))) {
     if (!have.has(`/${file}`)) problems.push(`missing public file /${file}`);
   }
+
+  // The home page's background, named so that moving or dropping the file is noticed.
+  if (!have.has(HOME_PATTERN)) problems.push(`missing the home page pattern ${HOME_PATTERN}`);
 
   for (const url of urls) {
     if (AUDIO_VIDEO_EXT.test(url)) problems.push(`audio or video file in the list: ${url}`);
@@ -88,6 +93,7 @@ function main() {
   }
 
   console.log(`precache entries: ${urls.length} (${urls.filter((u) => u.includes("?cat=")).length} category pages)`);
+  console.log(`home page saved:  ${["/", "/bn", HOME_PATTERN].filter((u) => urls.includes(u)).join("  ")}`);
   console.log(`files measured:   ${(bytes / 1024).toFixed(0)} KiB (page entries are not counted: the server renders them)`);
   if (problems.length === 0) {
     console.log("OK: the list matches the database and the build.");

@@ -1,0 +1,14 @@
+{
+  "note": "Hand-picked content for the home page, by dua.id in dua_main.sqlite. part is 1 for a dua's first row; field is the row's top or bottom text. Awaiting review by the Hafez.",
+  "duas": [4, 24, 245, 8, 207, 29, 15, 133, 23],
+  "hadith": [
+    { "dua_id": 45, "part": 1, "field": "top" },
+    { "dua_id": 137, "part": 1, "field": "bottom" },
+    { "dua_id": 65, "part": 1, "field": "top" },
+    { "dua_id": 41, "part": 1, "field": "top" },
+    { "dua_id": 143, "part": 1, "field": "bottom" },
+    { "dua_id": 43, "part": 1, "field": "top" },
+    { "dua_id": 230, "part": 1, "field": "top" },
+    { "dua_id": 44, "part": 1, "field": "top" }
+  ]
+}

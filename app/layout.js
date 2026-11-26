@@ -38,6 +38,7 @@ export default function RootLayout({ children }) {
           <SyncStarter />
           <PreferencesApplier />
           <div
+            data-shell
             className={`${inter.variable} z-0 lg:fixed lg:inset-x-0 xl:fixed xl:inset-x-0 xl:p-6 xl:pb-0 2xl:px-10 2xl:pt-6 2xl:fixed 2xl:inset-x-0`}
           >
             <div className="relative grid gap-6 sm:gap-0 xl:grid-rows-[46px_1fr] 2xl:grid-rows-[46px_1fr] z-0 xl:grid-cols-[105px_350px_1fr] 2xl:grid-cols-[105px_350px_1fr_270px]">

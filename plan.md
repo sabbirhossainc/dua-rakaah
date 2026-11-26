@@ -1,6 +1,6 @@
 # Plan: dua-rakaah
 
-_Last updated 2026-11-26 (phases 4a and 4b built; their reviews and live checks still open). This file covers only the work still ahead. Completed work (restructure into one
+_Last updated 2026-11-26 (phases 4a, 4b and 5 built; their reviews and live checks still open). This file covers only the work still ahead. Completed work (restructure into one
 Next.js app, SQLite via `lib/db.js`, Next 16, Tailwind 4, ESLint flat config) is in git history, in commit `d1557b2`
 on branch `restructure/single-next-app`. Phase 1 (content pages) is the OpenSpec change `add-content-pages`, in
 `openspec/changes/archive/2026-11-25-add-content-pages/`._
@@ -35,12 +35,16 @@ modeled on duaruqyah.com.
   matches are not yet reviewed and the source's usage terms are unconfirmed.
 - With Quran Foundation credentials, dua parts that are Quran verses play a Quran.com recitation, with a reciter picker
   (phase 4b). Checked on pre-live (surahs 1 and 2) on 2026-11-26. **Not tried on production.**
+- `/` and `/bn` are a home page with prayer times computed on the device, a countdown, the Hijri date, duas,
+  categories, a hadith and a donation card, readable offline (phase 5). **Not ready to launch:** the picked content,
+  the town list and the new Bangla text are not yet reviewed.
 
 **Not done yet:**
 
 | Area | State |
 |---|---|
-| `/` and `/support` | Placeholder text only. `/` shows just "Home Page"; it is planned as phase 5. |
+| `/support` | Placeholder text only. The home page's donation card links to it (question 13). |
+| Home page reviews | Open: the Hafez reviews `data/home-picks.json`; a Bangla speaker reviews the new labels and town names. See phase 5. |
 | LeftBar items (`/alldua`, `/rakaah`, `/dua-info`, `/books`) | These routes don't exist. `/rakaah` is planned as phase 6 (salah). The others stay as placeholders. `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account` and `/bn/account` exist. |
 | `Search` and the category search input | Markup only. Search was left out of phase 1 (item 7 of the old roadmap). |
 | `DuaIcons` copy, plan, share, report | Links with `href=""` and no behavior. The bookmark icon works (phase 3). |
@@ -243,20 +247,22 @@ Split into two changes, so that audio could start without Quran Foundation crede
 
 ### Phase 5: Home page
 
-_Planned 2026-11-26. OpenSpec change: `add-home-page`._
+_Planned and built 2026-11-26. OpenSpec change `add-home-page`, archived in `openspec/changes/archive/2026-11-26-add-home-page/` with its reviews (task 5.4) still open._
 
-`/` shows only "Home Page" today (`app/page.js`). It becomes a page of separate cards on a soft Islamic background
-(our own subtle geometric pattern, in light and dark). English at `/` and Bangla at `/bn`, which does not exist yet.
+The home page is separate cards on a soft Islamic background (our own subtle geometric pattern, in light and dark).
+English at `/` and Bangla at `/bn`.
 duaruqyah.com's home page was the reference for which sections to show, not for its design or text. It refused
 automated fetching (403) on 2026-11-26.
 
 **Cards, in order:**
 
-1. **Location and time.** The place the times are for, and a live clock in the reader's time zone.
+1. **Location and time.** The place the times are for, and a live clock in that place's time zone (the device's for
+   "My location" and the default).
 2. **Today.** A short header: the weekday, the Hijri date and the Gregorian date.
 3. **Prayer times.** Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, with the current waqt highlighted. Sunrise is shown
    but is not a prayer, and between sunrise and Dhuhr no waqt is current.
 4. **Countdown.** A circle (SVG ring) that empties as the current waqt runs out, with the time left until the next one.
+   During Fajr it counts to sunrise (decided 2026-11-26).
 5. **Duas.** A few existing duas from `data/dua_main.sqlite`, linking to their category pages.
 6. **Categories.** The 10 categories, reusing the `/duas` grid.
 7. **Hadith.** One short hadith quote with its reference.
@@ -273,12 +279,20 @@ automated fetching (403) on 2026-11-26.
 | Duas and hadith | **From the content database**, chosen in the browser by the day's date from a list built into the page | No new source and no new license question. Categories 1 and 2 already hold hadith with references. Fixed and prerendered, so the page still works offline. |
 | AlAdhan API | **Not used** | Not needed, and it would see the reader's location. Its terms (free, no attribution, no stated rate limit, logs kept 29 days) were read 2026-11-26. |
 
-- **Rendering:** `/` and `/bn` are prerendered and precached (both are already, or will be, in `lib/precache.js`).
+- **Rendering:** `/` and `/bn` are prerendered and precached (`lib/precache.js`).
   Everything that depends on the reader (location, clock, times, countdown, the day's dua and hadith) is filled in on
   the device after load. The server never sees it.
 - **Times are a guide:** say so on the card, and suggest checking with the local mosque.
 - **Checks:** unit tests for the waqt logic (current and next waqt, the gap after sunrise, Isha past midnight, the day
-  change, invalid times near the poles), `npm run smoke` for `/` and `/bn`, and the precache check.
+  change, invalid times near the poles), `npm run smoke` for `/` and `/bn`, and the precache check. All passed on
+  2026-11-26, as did offline use on a production build. "Use my location" was tried with a stand-in for the browser's
+  location service, **not** through a real permission prompt.
+- **Town list:** 10 of the 64 towns were checked on a map on 2026-11-26 (by Claude, not a person). Cox's Bazar was
+  3 km off and was corrected.
+- **Open before launch:**
+  - The Hafez reviews the duas and hadith quotes in `data/home-picks.json`.
+  - A Bangla speaker reviews the new labels in `lib/i18n.js` and the town names in `data/bd-districts.json`.
+  - The Privacy Policy says the position from "Use my location" stays on the device.
 
 ### Phase 6: Raka'ah (salah / namaz)
 

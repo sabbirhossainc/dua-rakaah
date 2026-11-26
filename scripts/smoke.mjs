@@ -153,7 +153,7 @@ for (const lang of ["en", "bn"]) {
 }
 
 // ---- the other saved pages have no audio either ----
-for (const p of ["/", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"]) {
+for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"]) {
   const { body } = await get(p);
   check(`${p}: no <audio>, no ihadis.com, no recording URL`, !body.includes("<audio") && !body.includes("ihadis.com") && !body.includes(".mp3"));
   check(`${p}: no Quran.com address or reciter name`, !QURAN_CONTENT.test(body), QURAN_CONTENT.exec(body)?.[0]);
@@ -249,6 +249,52 @@ for (const p of ["/", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", 
   }
 }
 
+// ---- the home page: the same HTML for everyone, with nothing that depends on the reader's time or place ----
+{
+  const picks = JSON.parse(fs.readFileSync(new URL("../data/home-picks.json", import.meta.url), "utf8"));
+  const cards = ["place", "today", "times", "countdown", "duas", "categories", "hadith", "donation"];
+  // Two digits, a colon and two digits, in Latin or Bangla digits: what a prayer time or the clock looks like.
+  const timeValue = /[0-9\u09E6-\u09EF]{2}:[0-9\u09E6-\u09EF]{2}/;
+  for (const [path, lang, place] of [["/", "en", "Dhaka"], ["/bn", "bn", "ঢাকা"]]) {
+    const r = await get(path);
+    const html = noScripts(r.body);
+    const text = visibleText(r.body);
+    const prefix = lang === "bn" ? "/bn" : "";
+    check(`${path}: 200`, r.status === 200, `status ${r.status}`);
+    check(`${path}: indexable`, !/name="robots" content="[^"]*noindex/.test(r.body));
+    if (lang === "en") check(`${path}: the site's default title`, titleOf(r.body) === `Dua & Raka'ah | ${TITLE_SUFFIX}`, titleOf(r.body));
+    else check(`${path}: a Bangla title with the suffix`, /^[\u0980-\u09FF ]+ \| /.test(titleOf(r.body)) && titleOf(r.body).endsWith(`| ${TITLE_SUFFIX}`), titleOf(r.body));
+    check(`${path}: content area lang="${lang}"`, new RegExp(`<div[^>]*lang="${lang}"[^>]*data-home`).test(html));
+    const order = [...html.matchAll(/data-home-card="([a-z]+)"/g)].map((m) => m[1]);
+    check(`${path}: eight cards in order`, JSON.stringify(order) === JSON.stringify(cards), order.join(","));
+    check(`${path}: names the place`, text.includes(place));
+    const links = [...html.matchAll(/<a[^>]*data-category-card[^>]*>/g)].map((m) => decode(/href="([^"]+)"/.exec(m[0])?.[1] ?? ""));
+    check(`${path}: category links`, JSON.stringify(links) === JSON.stringify(categories.map((c) => pathFor(c, lang))), links.join(" "));
+    check(`${path}: donation link to /support`, /data-home-card="donation"[\s\S]*?href="\/support"/.test(html));
+    check(`${path}: no prayer time values`, !/<time\b/.test(html) && !timeValue.test(text), timeValue.exec(text)?.[0]);
+    check(`${path}: no Hijri date`, !/ AH\b|হিজরি [0-9\u09E6-\u09EF]|[0-9\u09E6-\u09EF]{4} হিজরি/.test(visibleText(html.split('data-home-card="duas"')[0])));
+    const duaIds = [...html.matchAll(/data-home-dua="(\d+)"/g)].map((m) => Number(m[1]));
+    check(`${path}: every listed dua`, JSON.stringify([...duaIds].sort()) === JSON.stringify([...picks.duas].sort()), duaIds.join(","));
+    for (const id of picks.duas) {
+      const row = db.prepare("SELECT cat_id FROM dua WHERE id = ?").get(id);
+      const c = categories.find((x) => x.cat_id === row.cat_id);
+      check(`${path}: dua ${id} links to its card`, decode(html).includes(`href="${pathFor(c, lang)}#dua-${id}"`));
+    }
+    const quotes = picks.hadith.filter((q) =>
+      db.prepare(`SELECT ${q.field}_${lang} AS v FROM dua WHERE id = ? ORDER BY rowid LIMIT 1 OFFSET ?`).get(q.dua_id, q.part - 1)?.v?.trim()
+    );
+    check(`${path}: every quote in this language (${quotes.length})`, count(html, "data-home-quote=") === quotes.length, `found ${count(html, "data-home-quote=")}`);
+    check(`${path}: all duas link`, html.includes(`href="${prefix}/duas"`));
+  }
+  const pattern = await fetch(BASE + "/images/home-pattern.svg");
+  check("the home pattern is served by the app", pattern.status === 200 && /svg/.test(pattern.headers.get("content-type") ?? ""), `status ${pattern.status}`);
+  const sheets = [...(await get("/")).body.matchAll(/href="(\/_next\/static\/[^"]+\.css)[^"]*"/g)].map((m) => m[1]);
+  const css = (await Promise.all(sheets.map((s) => get(s)))).map((r) => r.body).join("");
+  const patternUrls = [...css.matchAll(/url\(["']?([^"')]*home-pattern[^"')]*)/g)].map((m) => m[1]);
+  check("the stylesheet takes the pattern from the app's origin", patternUrls.length > 0 && patternUrls.every((u) => u.startsWith("/") && !u.startsWith("//")), `${sheets.length} sheets, ${patternUrls.join(" ")}`);
+  check("no duaruqyah.com in the stylesheet", !css.includes("duaruqyah.com"));
+}
+
 // ---- redirects and not-found ----
 const redirects = [
   ["/duas/morning-&-evening?cat=5", "/duas/morning-evening?cat=5"],
@@ -275,7 +321,7 @@ for (const p of ["/duas/sleep?cat=99", "/duas/sleep?cat=abc", "/duas/sleep?cat=6
 }
 
 // ---- site shell ----
-for (const p of ["/", "/duas", "/bn/duas", "/support", "/duas/sleep?cat=6"]) {
+for (const p of ["/", "/bn", "/duas", "/bn/duas", "/support", "/duas/sleep?cat=6"]) {
   const html = (await get(p)).body;
   const desc = decode(/<meta name="description" content="([^"]*)"/.exec(html)?.[1] ?? "");
   check(`${p}: meta description describes the collection`, /dua/i.test(desc) && !/generated by/i.test(desc), desc);
@@ -337,7 +383,7 @@ check("/duas: the top bar links to the account page", (await get("/duas")).body.
   check("/serwist/sw.js: never cached by the browser", /no-cache/.test(cc) && /no-store/.test(cc), cc);
 
   const entryUrls = [...worker.matchAll(/\{(?:url:"([^"]+)",revision:[^}]+|revision:[^,}]+,url:"([^"]+)")\}/g)].map((m) => m[1] ?? m[2]);
-  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"];
+  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/bn", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"];
   const missing = expectedPages.filter((u) => !entryUrls.includes(u));
   check(`worker precaches all ${expectedPages.length} pages (category pages come from the database)`, missing.length === 0, `missing: ${missing.join(" ")}`);
   check("worker precaches no audio and no /api/ URL", !entryUrls.some((u) => /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|weba)(\?|$)/i.test(u) || u.startsWith("/api/")));
