@@ -31,9 +31,9 @@ export default function LeftBar() {
     },
     {
       id: "5",
-      icon: "ruqyah",
-      alt: "ruqyah",
-      href: "/ruqyah",
+      icon: "rakaah",
+      alt: "rakaah",
+      href: "/rakaah",
     },
     {
       id: "6",

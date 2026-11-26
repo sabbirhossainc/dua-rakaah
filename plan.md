@@ -1,4 +1,4 @@
-# Plan: ird-dua-app
+# Plan: dua-rakaah
 
 _Last updated 2026-11-26 (phases 4a and 4b built; their reviews and live checks still open). This file covers only the work still ahead. Completed work (restructure into one
 Next.js app, SQLite via `lib/db.js`, Next 16, Tailwind 4, ESLint flat config) is in git history, in commit `d1557b2`
@@ -7,11 +7,11 @@ on branch `restructure/single-next-app`. Phase 1 (content pages) is the OpenSpec
 
 ## 1. Where the project stands
 
-A "Dua & Ruqyah" web app that shows Islamic supplications (duas) grouped by category. Its UI is
+A "Dua & Raka'ah" web app that shows Islamic supplications (duas) grouped by category. Its UI is
 modeled on duaruqyah.com.
 
 ```
- ird-dua-app/  (one Next.js 16 app, React 19, Tailwind 4, Turbopack)
+ dua-rakaah/  (one Next.js 16 app, React 19, Tailwind 4, Turbopack)
    app/                 routes and components
    lib/db.js            read-only SQLite helpers (better-sqlite3, server-only)
    data/dua_main.sqlite content database (read-only, ships with the app)
@@ -40,8 +40,8 @@ modeled on duaruqyah.com.
 
 | Area | State |
 |---|---|
-| `/` and `/support` | Placeholder text only. `/` shows just "Home Page". |
-| LeftBar items (`/alldua`, `/ruqyah`, `/dua-info`, `/books`) | These routes don't exist. The others stay as placeholders. `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account` and `/bn/account` exist. |
+| `/` and `/support` | Placeholder text only. `/` shows just "Home Page"; it is planned as phase 5. |
+| LeftBar items (`/alldua`, `/rakaah`, `/dua-info`, `/books`) | These routes don't exist. `/rakaah` is planned as phase 6 (salah). The others stay as placeholders. `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account` and `/bn/account` exist. |
 | `Search` and the category search input | Markup only. Search was left out of phase 1 (item 7 of the old roadmap). |
 | `DuaIcons` copy, plan, share, report | Links with `href=""` and no behavior. The bookmark icon works (phase 3). |
 | `RightBar` settings | The language buttons, appearance, Arabic text size and reciter work. The rest is static. |
@@ -92,7 +92,9 @@ modeled on duaruqyah.com.
 | Category URL | `/duas/<slug>?cat=N`. `cat` decides the page. The slug is cosmetic: a wrong slug redirects (308) to the canonical URL, and an unknown category returns 404. |
 | `/duas` | A category grid. |
 | Language | **English is the default.** Bangla is the alternative. It comes from the URL only: `/duas/...` for English and `/bn/duas/...` for Bangla. |
-| Sidebar | Ruqyah, books, dua-info and alldua stay as **placeholders**. Bookmark and memorize become real features. |
+| Sidebar | Books, dua-info and alldua stay as **placeholders**. Bookmark and memorize become real features. Raka'ah becomes the salah page (phase 6). |
+| Home page | **Cards:** location and time, today's Hijri date, prayer times with the current waqt, a countdown circle, duas, categories, a hadith, donation (phase 5). Prayer times are **computed on the device** (adhan); the location never leaves it. |
+| Raka'ah content | **Our own guide, reviewed by a scholar, shipped with the app.** No API supplies one (checked 2026-11-26). APIs only add audio, words and evidence. |
 | User data | **Turso** (hosted SQLite) for bookmarks, memorize, preferences, and any future data the app writes. It stays separate from the content DB. |
 | Identity | **Hybrid.** Users start with an anonymous ID (kept in IndexedDB, and bound to the browser by a signed cookie at the first sync). Google sign-in goes through Auth.js with **JWT sessions and no database adapter**, so no Auth.js tables exist and only Google's account ID is stored. The anonymous data is merged into the account at sign-in. |
 | Architecture | **Local-first.** The app works offline and syncs when online. |
@@ -238,6 +240,93 @@ Split into two changes, so that audio could start without Quran Foundation crede
     the basmala the card shows, and test playback on iOS Safari.
   - Decide the partial and near verse matches in `.audio-cache/report.html` (dua 201 is a near match of 2:255; duas 47,
     118 and 128 look like real quotations inside a verse).
+
+### Phase 5: Home page
+
+_Planned 2026-11-26. OpenSpec change: `add-home-page`._
+
+`/` shows only "Home Page" today (`app/page.js`). It becomes a page of separate cards on a soft Islamic background
+(our own subtle geometric pattern, in light and dark). English at `/` and Bangla at `/bn`, which does not exist yet.
+duaruqyah.com's home page was the reference for which sections to show, not for its design or text. It refused
+automated fetching (403) on 2026-11-26.
+
+**Cards, in order:**
+
+1. **Location and time.** The place the times are for, and a live clock in the reader's time zone.
+2. **Today.** A short header: the weekday, the Hijri date and the Gregorian date.
+3. **Prayer times.** Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, with the current waqt highlighted. Sunrise is shown
+   but is not a prayer, and between sunrise and Dhuhr no waqt is current.
+4. **Countdown.** A circle (SVG ring) that empties as the current waqt runs out, with the time left until the next one.
+5. **Duas.** A few existing duas from `data/dua_main.sqlite`, linking to their category pages.
+6. **Categories.** The 10 categories, reusing the `/duas` grid.
+7. **Hadith.** One short hadith quote with its reference.
+8. **Donation.** A card linking to `/support`. No payment is taken on the page.
+
+**How it works (checked 2026-11-26):**
+
+| Need | Choice | Why |
+|---|---|---|
+| Prayer times | **[adhan](https://github.com/batoulapps/adhan-js)** 4.4.6 (MIT), computed **in the browser** | Offline, no API and no request that reveals the reader's location. It has `currentPrayer()`, `nextPrayer()` and `timeForPrayer()`; the countdown is our own subtraction. Methods include `Karachi` and `MuslimWorldLeague`, and Asr can be `Hanafi` or `Shafi`. |
+| Defaults | Method **Karachi**, Asr **Hanafi** | What most readers in Bangladesh use. A setting to change them can come later (question 14). |
+| Location | **Dhaka** until the reader presses "Use my location" (browser geolocation) or picks a city from a shipped list | Never ask for location on page load. The coordinates **stay on the device** (local storage only, never synced, never sent), so the Privacy Policy can say so. No reverse geocoding: that would send the coordinates to a service. |
+| Hijri date | `Intl.DateTimeFormat` with the `islamic-umalqura` calendar, Bangla digits on `/bn` | Built into the browser and Node. Node 24 gives "Thursday, Jumada II 16, 1448 AH" and "বৃহস্পতিবার, ১৬ জমাদিউস সানি, ১৪৪৮" for 2026-11-26. Bangladesh's moon sighting is often a day behind Umm al-Qura, so offer a −1/0/+1 day adjustment. |
+| Duas and hadith | **From the content database**, chosen in the browser by the day's date from a list built into the page | No new source and no new license question. Categories 1 and 2 already hold hadith with references. Fixed and prerendered, so the page still works offline. |
+| AlAdhan API | **Not used** | Not needed, and it would see the reader's location. Its terms (free, no attribution, no stated rate limit, logs kept 29 days) were read 2026-11-26. |
+
+- **Rendering:** `/` and `/bn` are prerendered and precached (both are already, or will be, in `lib/precache.js`).
+  Everything that depends on the reader (location, clock, times, countdown, the day's dua and hadith) is filled in on
+  the device after load. The server never sees it.
+- **Times are a guide:** say so on the card, and suggest checking with the local mosque.
+- **Checks:** unit tests for the waqt logic (current and next waqt, the gap after sunrise, Isha past midnight, the day
+  change, invalid times near the poles), `npm run smoke` for `/` and `/bn`, and the precache check.
+
+### Phase 6: Raka'ah (salah / namaz)
+
+_Researched 2026-11-26. Not started. Proposed OpenSpec change: `add-rakaah`._
+
+The sidebar's Raka'ah button (`/rakaah`, icon `public/icons/rakaah.svg`) leads to a page about salah (Bangla: namaz):
+how to pray it, step by step, with the words said in each position. English at `/rakaah`, Bangla at `/bn/rakaah`, the
+same URL rule as the dua pages.
+
+**What the sources offer (checked 2026-11-26):**
+
+| Source | What it has for salah | Terms and access | Use |
+|---|---|---|---|
+| **Quran Foundation** (Content API v4) | **No salah or prayer content:** no guide, no prayer times. Its "Ruku" endpoints are Quran divisions, not the prayer position. It does have verse text, translations, verse-by-verse audio, and hadith and answer lookups **per verse**. | Already registered (phase 4b). Verse text needs a second scope, `content.quran.read`. Same Developer Terms and Content Sync question. | Audio (and only if needed, text) for what is recited standing: Al-Fatihah and short surahs. |
+| **Hisn al-Muslim** (`husn_ar.json`, already used in 4a) | Prayer chapters with Arabic text and audio: 16 opening (istiftah), 17 ruku, 18 rising from ruku, 19 sujood, 20 between the prostrations, 21 prostration of recitation, 22 tashahhud, 23 salawat after the tashahhud, 24 dua before salam, 25 adhkar after salam, 26 istikhara, 32 qunut of witr, 33 after witr. Also 15 adhan. | Usage terms **unknown** (the same blocker as 4a). Some chapter text URLs do not match their titles (86 and 87 point to the same file), so check each one. | Words and audio for each position, through the existing `audio:match` pipeline. |
+| **This app's database** | Prayer duas already in "Time of Dua" (category 3): 38 after obligatory prayer, 44 in prostration, 49 and 50 opening the prayer, 51 behind the imam, 52 and 54 rising from ruku, 55 to 57 before salam. Bilingual, and some already have audio. | Ours. Source and license of the texts still unknown (see "Before launch"). | Link or reuse them from the steps rather than copying them. |
+| **fawazahmed0/hadith-api** | Hadith collections in many languages, split into numbered sections (each collection's Book of Prayer). Whether Bengali editions exist still needs checking in `editions.json`. | Unlicense. Served from jsDelivr, no key, no stated rate limit; the README advises a fallback between `.min.json` and `.json`. | Optional: the evidence (dalil) under each step. Fetched before the build, like `audio:match`, never at run time. |
+| **Sunnah.com API** | Hadith collections, including Bengali for some. | Needs an API key, requested through a GitHub issue. Terms of reuse not confirmed. | Alternative to the line above, if a key is granted. |
+| **AlAdhan** (Islamic Network) | Prayer times, Qibla direction, Islamic calendar. **No guide.** | No key mentioned. Terms page (`credits-and-terms`) not read yet. | Optional, later: prayer times. Needs the reader's location, so it must go in the Privacy Policy. |
+| **A written step-by-step guide** | No API was found. Books exist, for example *How to Pray According to the Prophet* by Ibn Baz, which has a Bangla edition (publisher page, not an API). | Copyrighted books: write our own text and cite them. | The core of the page. **Has to be written and checked by a scholar.** |
+
+**Conclusion:** no API supplies a salah guide in English and Bangla. The guide text must be our own content, reviewed,
+and shipped with the app like the duas. The APIs fill in the words, audio and evidence for each step.
+
+**Proposed scope:**
+
+1. **Content.** A new read-only content file (a table in `data/dua_main.sqlite` or a shipped JSON; decide in the
+   design), bilingual (`_en` and `_bn`), never fetched at run time:
+   - **Steps**, in order: intention (niyyah), opening takbir, standing (qiyam) with the opening dua, Al-Fatihah and a
+     surah, ruku, rising from ruku, sujood, sitting between the prostrations, the second sujood, tashahhud, salawat,
+     the dua before salam, salam. Each step has its instruction text, the Arabic words, transliteration and
+     translation, and the reference.
+   - **Raka'ah counts** for the five daily prayers (fard, sunnah, witr), plus Jumu'ah.
+   - **After salam:** the adhkar (Hisn al-Muslim 25 and dua 38).
+   - **Later, as separate steps:** witr and qunut, istikhara, sujood al-sahw.
+2. **Page.** `/rakaah` and `/bn/rakaah`, prerendered, reusing the dua card (Arabic size setting, bookmark, memorize,
+   audio) for the words of each step.
+3. **Audio.** Run the steps' Arabic through `audio:match` like duas. Al-Fatihah and the short surahs come from
+   Quran.com (verse keys), the position adhkar from Hisn al-Muslim. The same review and the same launch conditions as
+   phase 4 apply.
+4. **Offline.** Add both pages to the precache list (`lib/precache.js`) and to `npm run check:precache` and
+   `npm run smoke`. No audio is saved, as in phase 2.
+5. **User data.** If steps are bookmarked or memorized, their IDs must not collide with `dua.id`: either give the steps
+   their own record type in `lib/sync/records.js`, or IDs in a range no dua uses. Decide in the design.
+6. **Not in the first version:** Qibla (adhan's `Qibla()` can compute it on the device), illustrations, video,
+   women's or children's variants. Prayer times are on the home page (phase 5).
+
+**Decisions needed before the design:** see section 6, questions 9 to 12.
 
 ### Before launch
 
@@ -606,7 +695,7 @@ Sources: [developer journey](https://api-docs.quran.foundation/docs/developer-jo
 ## 6. Open questions
 
 1. _(Resolved in phase 1: `?cat=N` stays, and `/duas` is a category grid.)_
-2. **What `/` should be:** it shows only "Home Page". A redirect to `/duas`, or a real home page?
+2. _(Answered 2026-11-26: a real home page, phase 5.)_
 3. _(Resolved in `add-memorize`: five steps, 0 / 25 / 50 / 75 / 100. The server accepts any whole number from 0 to 100.)_
 4. _(Resolved in `add-dua-audio`: hidden when offline, and disabled with "Audio unavailable" when online but broken.)_
 5. **Default reciter:** recitation 7 is built in as the default. Pre-live confirms it is Mishari Rashid al-Afasy
@@ -614,3 +703,15 @@ Sources: [developer journey](https://api-docs.quran.foundation/docs/developer-jo
 6. _(Answered 2026-11-26: a Hafez reviews the dua-to-audio matches. Not done yet.)_
 7. **Is about 50% audio coverage enough for launch,** or should more providers be searched?
 8. **Hisn al-Muslim's usage terms** still need checking.
+9. **Raka'ah: which method (madhhab)?** The steps differ in places: hand position, raising the hands, what is said
+   aloud, sitting. One method (most readers in Bangladesh follow Hanafi), or the main differences side by side?
+10. **Raka'ah: who writes and reviews the guide?** No source provides it, so it must be written and signed off by a
+    scholar (the Hafez from question 6, or someone else) before it ships.
+11. **Raka'ah: Qibla?** Not in the first version. Prayer times moved to the home page (phase 5).
+12. **Raka'ah: show hadith evidence under each step?** If yes, choose fawazahmed0/hadith-api (Unlicense, check for
+    Bengali) or Sunnah.com (needs a key).
+13. **Home: donation.** Where should the card point? `/support` is a placeholder. Which methods (bKash, Nagad, bank,
+    a payment link) and to whom?
+14. **Home: prayer time settings.** Karachi and Hanafi are fixed defaults in the first version. Should readers be
+    able to change the method, the Asr rule and the Hijri adjustment, and should those sync like the other settings?
+15. **Home: city list.** Bangladesh's 64 district towns only, or other countries too?

@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-## To run this Project
- #install the dependences 
-## Run this command on both front-end and back-end
- #npm run dev
-=======
-# Dua & Ruqyah
+# Dua & Raka'ah
 
 A web app that shows Islamic supplications (duas) grouped by category, with the Arabic text,
 transliteration and translation, in English and Bangla. Its look is modeled on duaruqyah.com.
@@ -240,12 +234,12 @@ example weekly:
 
 ```bash
 # cron, Mondays at 06:00
-0 6 * * 1  cd /path/to/ird-dua-app && npm run audio:check
+0 6 * * 1  cd /path/to/dua-rakaah && npm run audio:check
 ```
 
 ```powershell
 # Windows Task Scheduler, Mondays at 06:00
-schtasks /Create /TN "dua audio check" /SC WEEKLY /D MON /ST 06:00 /TR "cmd /c cd /d C:\path\to\ird-dua-app && npm run audio:check >> audio-check.log 2>&1"
+schtasks /Create /TN "dua audio check" /SC WEEKLY /D MON /ST 06:00 /TR "cmd /c cd /d C:\path\to\dua-rakaah && npm run audio:check >> audio-check.log 2>&1"
 ```
 
 To drop a dead recording, run `npm run audio:match`, or reject it in the review file, then rebuild and deploy.
@@ -256,13 +250,13 @@ Bookmarks, memorize progress and settings are saved on the reader's device first
 offline and never wait for the network. A background sync copies them to one shared database (Turso, a hosted
 SQLite) through `POST /api/sync`, which lets the same data appear on every device after Google sign-in. The designs
 are in `openspec/changes/archive/2026-11-25-add-user-data-sync/design.md` (the sync, bookmarks),
-`openspec/changes/archive/2026-11-25-add-memorize/design.md` (memorize) and `openspec/changes/add-preferences/design.md`
+`openspec/changes/archive/2026-11-25-add-memorize/design.md` (memorize) and `openspec/changes/archive/2026-11-25-add-preferences/design.md`
 (settings).
 
 - **Settings.** The right bar (1536px and wider) has Font Settings (Arabic text size: small, medium, large, extra
   large; medium is the original 28px) and Appearance Settings (light or dark). A choice applies at once, works
-  offline and follows the reader to every device after sign-in. There is also a stored `reciter_id` setting with no
-  control yet (the Quran.com recordings will use it). Three setting names exist: `theme`, `arabic_font`, `reciter_id`; they are
+  offline and follows the reader to every device after sign-in. Audio / Reciter (shown only when Quran.com audio is on)
+  sets `reciter_id`, the Quran.com reciter; see "Audio". Three setting names exist: `theme`, `arabic_font`, `reciter_id`; they are
   listed with their valid values in `lib/preferences.js`. Two devices that change the same setting keep the newest
   change. **At sign-in the account's existing value wins**; the device's value is used only for a setting the account
   does not have yet (a change with `if_absent: 1`). Sign-out returns the device to light and medium.
@@ -355,4 +349,3 @@ replay one. Sign-in with Google itself needs real credentials and has to be chec
 share an `id` are the parts of one dua, and their order in the table is the only record of part order, so keep it.
 After replacing the file, run `npm run db:vacuum`, `npm run audio:match` (a part whose Arabic text changed shows no
 recording until it is matched again) and `npm run smoke`.
->>>>>>> restructure/single-next-app

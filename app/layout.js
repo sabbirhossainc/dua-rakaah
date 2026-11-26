@@ -16,7 +16,7 @@ const inter = Inter({
 
 export const metadata = {
   title: {
-    default: "Dua & Ruqyah | All Duas Collection",
+    default: "Dua & Raka'ah | All Duas Collection",
     template: "%s | All Duas Collection",
   },
   description:
