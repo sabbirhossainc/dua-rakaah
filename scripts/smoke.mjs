@@ -259,6 +259,18 @@ check("favicon file is served", favicon.status === 200, String(favicon.status));
   }
 }
 
+// ---- the account page (static; what it does happens in the browser) ----
+for (const [path, lang, heading, action] of [
+  ["/account", "en", "Your data", "Delete my data"],
+  ["/bn/account", "bn", "আপনার ডেটা", "আমার ডেটা মুছুন"],
+]) {
+  const res = await get(path);
+  check(`${path}: 200`, res.status === 200, `status ${res.status}`);
+  check(`${path}: noindex`, /name="robots" content="noindex/.test(res.body));
+  check(`${path}: heading, action and language`, res.body.includes(heading) && res.body.includes(action) && res.body.includes(`lang="${lang}"`));
+}
+check("/duas: the top bar links to the account page", (await get("/duas")).body.includes('href="/account"'));
+
 // ---- offline support: the service worker file and the offline page ----
 {
   const res = await fetch(BASE + "/serwist/sw.js");
@@ -269,7 +281,7 @@ check("favicon file is served", favicon.status === 200, String(favicon.status));
   check("/serwist/sw.js: never cached by the browser", /no-cache/.test(cc) && /no-store/.test(cc), cc);
 
   const entryUrls = [...worker.matchAll(/\{(?:url:"([^"]+)",revision:[^}]+|revision:[^,}]+,url:"([^"]+)")\}/g)].map((m) => m[1] ?? m[2]);
-  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize"];
+  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"];
   const missing = expectedPages.filter((u) => !entryUrls.includes(u));
   check(`worker precaches all ${expectedPages.length} pages (category pages come from the database)`, missing.length === 0, `missing: ${missing.join(" ")}`);
   check("worker precaches no audio and no /api/ URL", !entryUrls.some((u) => /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|weba)(\?|$)/i.test(u) || u.startsWith("/api/")));
@@ -361,6 +373,19 @@ check("favicon file is served", favicon.status === 200, String(favicon.status));
 
   const providers = await get("/api/auth/providers");
   check("/api/auth/providers: 200 and lists Google", providers.status === 200 && providers.body.includes("google"), `status ${providers.status}`);
+  const remove = (headers = {}, body = { scope: "anon", anon_id: crypto.randomUUID() }) =>
+    fetch(BASE + "/api/account/delete", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
+  const foreign = await remove({ origin: "https://example.invalid" });
+  check("POST /api/account/delete: another site is 403", foreign.status === 403, `status ${foreign.status}`);
+  const noSession = await remove({}, { scope: "account", anon_id: crypto.randomUUID() });
+  check("POST /api/account/delete: an account without a session is 401", noSession.status === 401, `status ${noSession.status}`);
+  const bare = await remove({}, { scope: "anon", anon_id: anon });
+  check("POST /api/account/delete: an identifier without its cookie is 403", bare.status === 403, `status ${bare.status}`);
+  const own = await remove({ cookie: setCookie.split(";")[0] }, { scope: "anon", anon_id: anon });
+  check("POST /api/account/delete: with the cookie it is 200 and clears the cookie", own.status === 200 && /^dua_anon=;/.test(own.headers.get("set-cookie") ?? ""), `status ${own.status}`);
+  const gone = await post({ anon_id: anon, cursor: 0, ops: [] });
+  check("POST /api/sync: a deleted identifier is 410", gone.status === 410, `status ${gone.status}`);
+
   const getSync = await get("/api/sync");
   check("GET /api/sync: not allowed", getSync.status === 405, `status ${getSync.status}`);
 }

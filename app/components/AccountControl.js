@@ -3,28 +3,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
-import { signIn, signOut } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { getDb } from "@/lib/local/db";
 import { getRunner, onRunnerEvent } from "@/lib/local/client";
 import {
   completePendingSignOut,
   completeSignIn,
   currentAccount,
+  isSignOutPending,
   purgeExpiredKept,
   signOutLocal,
   unsyncedCount,
 } from "@/lib/local/account";
 import { useAccount } from "@/lib/local/account-store";
+import { remoteSignOut } from "@/lib/local/remote-sign-out";
 import { langFromPathname } from "@/lib/content";
 import { fmt, t } from "@/lib/i18n";
-
-// Clears the session cookie and the anonymous-device cookie on the server. Throws when offline, so the sign-out
-// stays pending and syncing stays paused until it works (lib/local/account.js).
-async function remoteSignOut() {
-  const res = await fetch("/api/session/clear", { method: "POST" });
-  if (!res.ok) throw new Error("could not clear the device cookie");
-  await signOut({ redirect: false });
-}
 
 async function readSession() {
   try {
@@ -41,6 +35,7 @@ export default function AccountControl() {
   const lang = langFromPathname(usePathname());
   const { ready, account } = useAccount(); // read live from the local store, so it also works offline
   const [confirm, setConfirm] = useState(null); // { count } while the unsynced-changes warning is open
+  const [deletedNotice, setDeletedNotice] = useState(false);
   const cancelRef = useRef(null);
   const busy = useRef(false);
 
@@ -59,7 +54,8 @@ export default function AccountControl() {
       await finishPendingSignOut();
       const session = await readSession();
       const local = await currentAccount(db);
-      if (session === undefined) {
+      if (session === undefined || (await isSignOutPending(db))) {
+        // The device was cleared meanwhile and the session is about to end, or:
         // Offline or the server did not answer: leave things as they are.
       } else if (session && session.accountId !== local) {
         if (local) await signOutLocal(db, { keepUnsynced: true }); // another account signed in: keep the old one's unsent changes
@@ -67,7 +63,9 @@ export default function AccountControl() {
         getRunner().sync().catch(() => {});
       } else if (!session && local) {
         // The session ended (it expired, or the reader signed out in another tab).
-        await signOutLocal(db, { keepUnsynced: true });
+        // If it ended because the account was deleted, this clears the device and tells the reader.
+        await getRunner().checkDeleted();
+        if ((await currentAccount(db)) === local) await signOutLocal(db, { keepUnsynced: true });
         await finishPendingSignOut();
       }
     } catch (error) {
@@ -83,12 +81,17 @@ export default function AccountControl() {
     window.addEventListener("online", refresh);
     const stopListening = onRunnerEvent((event) => {
       if (event.type === "signed_out") refresh();
+      if (event.type === "deleted") {
+        setConfirm(null);
+        setDeletedNotice(true);
+        finishPendingSignOut().catch((error) => console.error("Could not sign out:", error));
+      }
     });
     return () => {
       window.removeEventListener("online", refresh);
       stopListening();
     };
-  }, [refresh]);
+  }, [refresh, finishPendingSignOut]);
 
   useEffect(() => {
     if (!confirm) return undefined;
@@ -133,10 +136,24 @@ export default function AccountControl() {
       <button
         type="button"
         onClick={account ? handleSignOut : handleSignIn}
-        className="mr-3 rounded-md border border-solid border-line bg-surface px-3 py-1 text-sm hover:bg-icon-bg"
+        className="mr-3 whitespace-nowrap rounded-md border border-solid border-line bg-surface px-3 py-1 text-sm hover:bg-icon-bg"
       >
         {t(lang, account ? "signOut" : "signIn")}
       </button>
+      {deletedNotice &&
+        createPortal(
+          <div
+            role="status"
+            lang={lang}
+            className="fixed top-4 left-1/2 z-50 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-lg border border-solid border-line bg-surface px-4 py-3 text-sm shadow-lg"
+          >
+            <span>{t(lang, "dataDeletedNotice")}</span>
+            <button type="button" onClick={() => setDeletedNotice(false)} className="px-2 py-1 underline">
+              {t(lang, "dismiss")}
+            </button>
+          </div>,
+          document.body
+        )}
       {confirm &&
         // In a portal on <body>: the top bar sits in a container with a negative z-index (see app/layout.js),
         // and a dialog inside it would be drawn behind the page.

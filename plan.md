@@ -1,6 +1,6 @@
 # Plan: ird-dua-app
 
-_Last updated 2026-11-25 (phase 3 bookmarks, memorize and settings done). This file covers only the work still ahead. Completed work (restructure into one
+_Last updated 2026-11-26 (phase 3 done). This file covers only the work still ahead. Completed work (restructure into one
 Next.js app, SQLite via `lib/db.js`, Next 16, Tailwind 4, ESLint flat config) is in git history, in commit `d1557b2`
 on branch `restructure/single-next-app`. Phase 1 (content pages) is the OpenSpec change `add-content-pages`, in
 `openspec/changes/archive/2026-11-25-add-content-pages/`._
@@ -28,6 +28,7 @@ modeled on duaruqyah.com.
 - The content DB is compacted (604 KB), and `npm run db:vacuum` repeats that safely.
 - Duas can be bookmarked (the icon on each card), and `/bookmark` lists them. Bookmarks work offline, sync to a shared
   database, and follow the reader after Google sign-in (phase 3).
+- Readers can delete their data at `/account`, and old removal records can be purged (phase 3).
 - Duas can be memorized (the third icon on each card: a "learned" checkbox and progress steps 0, 25, 50, 75, 100), and
   `/memorize` lists what the reader has started. It works offline and syncs the same way as bookmarks (phase 3).
 
@@ -36,7 +37,7 @@ modeled on duaruqyah.com.
 | Area | State |
 |---|---|
 | `/` and `/support` | Placeholder text only. `/` shows just "Home Page". |
-| LeftBar items (`/alldua`, `/ruqyah`, `/dua-info`, `/books`) | These routes don't exist. The others stay as placeholders. `/bookmark`, `/bn/bookmark`, `/memorize` and `/bn/memorize` exist. |
+| LeftBar items (`/alldua`, `/ruqyah`, `/dua-info`, `/books`) | These routes don't exist. The others stay as placeholders. `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account` and `/bn/account` exist. |
 | `Search` and the category search input | Markup only. Search was left out of phase 1 (item 7 of the old roadmap). |
 | `DuaIcons` copy, plan, share, report | Links with `href=""` and no behavior. The bookmark icon works (phase 3). |
 | `RightBar` settings (general, font, appearance) | Static. Only the language buttons work. |
@@ -138,7 +139,7 @@ Implemented by the OpenSpec change `add-offline-pwa`. Read its `design.md` for t
 
 Left for later: a web app manifest and PNG icons (installing the app), and an offline banner.
 
-### Phase 3: User data, identity and sync (bookmarks, sync, Google sign-in, memorize and settings done)
+### Phase 3: User data, identity and sync (done)
 
 Implemented for bookmarks by the OpenSpec change `add-user-data-sync`. Read its `design.md` for the reasons. In short:
 
@@ -180,8 +181,11 @@ Memorize is implemented by the OpenSpec change `add-memorize` (read its `design.
   and an inline script before first paint, using the `dua-prefs` copy in localStorage. The settings are on the right bar
   (1536px and wider only); a `/settings` page for narrower screens is not built.
 
-Still to do in phase 3:
-1. Purge old `applied_ops` and removed rows, and add account deletion.
+- **Purge and data deletion** (OpenSpec change `add-data-deletion`): `npm run db:user:purge` removes removed
+  bookmarks and applied change IDs accepted more than 180 days ago, and a device that missed a purge is refreshed
+  (`since`, `full`, `removed_before`). Readers delete their data at `/account` and `/bn/account`; deletion markers
+  stop other devices uploading it again (`410`). Nothing schedules the purge: the operator does. Not built: deleting
+  empty or abandoned anonymous owners, exporting data, and the Privacy Policy page.
 
 ### Phase 4: Audio
 
@@ -267,7 +271,7 @@ package was also pre-release when this was checked. The user data here is small,
 - `server_seq` comes from a single counter that the server bumps on every change it accepts. Devices pull rows where
   `server_seq` is greater than their cursor, so clock skew never affects what gets pulled.
 - `deleted` marks a removed record instead of deleting it, so removals made offline reach the other devices. Old
-  deleted rows can be purged later.
+  deleted rows are purged by `npm run db:user:purge`.
 - Create an `owners` row only when the first write is synced, not on every page view.
 - `applied_ops` is keyed by owner **and** op, so a change that was applied to an anonymous owner still applies once to
   the account when the device re-sends it at sign-in. A `sync_counter` table holds the single position counter.

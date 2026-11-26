@@ -21,6 +21,7 @@ app/                  routes and components
   offline/            the page shown for something that is not saved
   bookmark/, bn/bookmark/  the bookmark pages
   api/sync, api/auth  the sync route and Google sign-in (Auth.js)
+  account/, bn/account/    "Delete my data"; api/account/delete is its route
 lib/
   db.js               read-only SQLite helpers (server only)
   content.js          pure helpers: slugs, language columns, grouping, language switch
@@ -31,7 +32,7 @@ lib/
   turso.js, auth.js   the shared user-data database and Google sign-in (server only)
 data/dua_main.sqlite  the content database (10 categories, 23 subcategories, 176 duas)
 public/               icons and category images
-scripts/              smoke test, precache check and database compaction
+scripts/              smoke test, precache check, user-data setup and purge, and database compaction
 openspec/             specs, designs and tasks for each change
 plan.md               roadmap for the work still ahead
 ```
@@ -59,6 +60,7 @@ Open http://localhost:3000/duas.
 | `npm run smoke` | Checks a running server against the specs: statuses, redirects, content, both languages. Start it with `npm start` first. Set `BASE_URL` to test another address. |
 | `npm run check:precache` | Checks the built service worker's list of saved files against the database. Run it after `npm run build`. |
 | `npm run db:user:init` | Creates the user-data tables in the database named by `TURSO_DATABASE_URL`. Safe to run again. Reads `.env.local`. |
+| `npm run db:user:purge` | Deletes removed bookmarks and applied change IDs that the server accepted more than 180 days ago. `npm run db:user:purge -- --dry-run` only reports the counts. Reads `.env.local`. |
 | `npm run db:vacuum` | Compacts `data/dua_main.sqlite`. It replaces the file only if the schema and every row stay identical. Stop the dev server first. |
 
 ## URLs
@@ -70,6 +72,7 @@ Open http://localhost:3000/duas.
 | `/bn/duas`, `/bn/duas/<slug>?cat=<id>` | The same pages in Bangla |
 | `/bookmark`, `/bn/bookmark` | The reader's bookmarked duas (read from the browser, works offline) |
 | `/memorize`, `/bn/memorize` | The duas the reader has started memorizing, in progress and learned (read from the browser, works offline) |
+| `/account`, `/bn/account` | "Delete my data", linked from the top bar at every width (deleting needs a connection) |
 
 - `cat` decides which category is shown. The slug is only for readability: a wrong slug, or no `cat`, redirects
   (308) to the canonical URL, and an unknown category returns 404.
@@ -86,7 +89,7 @@ Static-only hosting (`output: 'export'`) will not work. A service worker needs H
 ## Offline use
 
 After one online visit, every page can be read with no network: the 20 category pages in both languages, `/duas`,
-`/bn/duas`, `/`, `/support`, `/bookmark`, `/bn/bookmark`, and the icons, images, scripts, styles and fonts they use. A service worker
+`/bn/duas`, `/`, `/support`, `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account`, `/bn/account`, and the icons, images, scripts, styles and fonts they use. A service worker
 (Serwist, `app/sw.js`) saves them. Anything else shows `/offline`, a short page that links back to `/duas`.
 
 - **Production builds only.** `npm run dev` never registers the worker, and removes one left on the same
@@ -153,6 +156,35 @@ Environment variables (server only: none may start with `NEXT_PUBLIC_`). Copy `.
 | `ANON_COOKIE_SECRET` | Signs the anonymous-device cookie. A long random string, different from `AUTH_SECRET`. |
 | `AUTH_TRUST_HOST` | Set to `true` when the app runs behind a proxy that sets the host header. |
 
+### Deleting data
+
+A reader, signed in or not, can erase their data at `/account` after a confirmation. The server deletes the account,
+every anonymous device merged into it and all their records in one transaction; the device is cleared and starts
+again as a new anonymous device. The reader's other devices are answered `410` at their next sync, and clear
+themselves. Signing in with the same Google account later starts a new, empty account, and changes a device had set
+aside at an offline sign-out before the deletion are not stored in it. The server keeps only deletion markers: the
+time, with a SHA-256 hash of the account ID or with a deleted anonymous owner's random ID. The design is in
+`openspec/changes/archive/2026-11-26-add-data-deletion/design.md`.
+
+Rolling back to a build from before this feature is safe for the data, but the old server ignores the markers, so a
+deleted reader's other devices could upload again. Avoid rolling back once deletions have happened.
+
+### Purging old removals
+
+Removed bookmarks and the list of applied change IDs grow for ever unless purged. **Nothing is purged unless the
+command is run.** Run it now and then, for example monthly from the operator's scheduler (cron, a scheduled CI job or
+Windows Task Scheduler), with the hosted database's URL and token in the environment or in `.env.local`:
+
+```bash
+npm run db:user:purge -- --dry-run   # only report how many rows would go
+npm run db:user:purge
+```
+
+It only removes what the server accepted more than 180 days ago, and is safe to repeat. A device that had not synced
+past a purged removal is sent all its records at its next sync and drops the bookmarks that are gone; its unsent
+changes older than those removals do not bring them back. A device that stays offline for more than 180 days can lose
+such an old unsent bookmark change.
+
 ```bash
 # Try sync locally with no cloud account
 cp .env.example .env.local      # then set TURSO_DATABASE_URL=file:data/user-dev.db and the two secrets
@@ -161,14 +193,15 @@ npm run build && npm start -- -p 3100
 ```
 
 For a hosted database, create it in Turso, put its URL and token in the environment, and run
-`npm run db:user:init` once. **When a release adds a table (memorize added `memorize`, settings added `preferences`), run `npm run db:user:init`
+`npm run db:user:init` once. **When a release adds a table (memorize added `memorize`, settings added `preferences`,
+data deletion added `purge_marks`, `deleted_accounts` and `deleted_owners`), run `npm run db:user:init`
 against the hosted database *before* deploying the new build**: it only adds tables, so the old build is not
 affected, but the new build's sync fails (503, bookmarks included) until the table exists. Roll back by deploying the
 previous build: the extra table stays unused, and local databases already at Dexie version 3 still open with the
 previous code (checked with `fake-indexeddb`), but a device with memorize or setting changes still queued cannot sync until the
 new build returns. `npm test` includes the convergence test: several simulated devices make random
 changes over a network that drops, delays and repeats requests, and all of them must end with the server's data
-(200 random schedules, about 30 seconds). Set `CONVERGENCE_SEEDS` and `CONVERGENCE_FIRST_SEED` to run fewer or to
+(200 random schedules, and 200 more with purges and long-offline devices, about a minute). Set `CONVERGENCE_SEEDS` and `CONVERGENCE_FIRST_SEED` to run fewer or to
 replay one. Sign-in with Google itself needs real credentials and has to be checked by hand.
 
 ## Changing the content database
