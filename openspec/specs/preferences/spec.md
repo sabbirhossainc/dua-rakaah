@@ -88,11 +88,28 @@ could not be sent SHALL be kept and sent the next time the same account signs in
 - **WHEN** the same account signs in again on that device
 - **THEN** the unsent change is sent to the account
 
-### Requirement: The reciter is stored and synced only
-The reciter setting SHALL be saved, synced and cleared like the others, but nothing in the app SHALL read or show it
-until the audio feature uses it.
+### Requirement: The Settings panel chooses a reciter
+When the Quran.com source is set up and the device is online, the Settings panel SHALL offer a reciter choice listing
+the available reciters, usable with the keyboard, with an accessible name in the page's language. It SHALL show the
+saved reciter as selected, or recitation 7 when none is saved. Looking at the list SHALL NOT save a setting.
 
-#### Scenario: Stored reciter
-- **GIVEN** a reciter number has been saved on the account
-- **WHEN** the reader signs in on a new device
-- **THEN** the device holds the same reciter number, and no part of the page changes because of it
+#### Scenario: Choose a reciter
+- **WHEN** the reader selects another reciter
+- **THEN** the choice is saved, shows as selected and reaches the reader's other devices like any other setting
+
+#### Scenario: Nothing chosen
+- **WHEN** a reader who never chose a reciter opens the panel
+- **THEN** recitation 7 shows as selected, and no reciter record is stored
+
+#### Scenario: Offline or no source
+- **WHEN** the device is offline, or the Quran.com source is not set up
+- **THEN** no reciter choice is shown, and the saved reciter is kept
+
+#### Scenario: List cannot be loaded
+- **WHEN** the reciter list cannot be fetched
+- **THEN** the panel says the reciters are unavailable, and the other settings work
+
+#### Scenario: Saved reciter no longer listed
+- **GIVEN** the saved reciter number is not on the list
+- **WHEN** the panel opens
+- **THEN** recitation 7 shows as selected, and the saved value is not changed
