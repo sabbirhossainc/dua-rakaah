@@ -77,13 +77,17 @@ with their titles and working links, because the page carries a small index of e
 - **WHEN** the reader follows a link from the offline list to a category page they have not opened before
 - **THEN** the category page loads from the saved copy
 
-### Requirement: Bookmark pages are in the sidebar and in the saved pages
-The bookmark entry in the sidebar SHALL open the page for the reader's language, and both bookmark pages SHALL be
-in the list of pages saved for offline use.
+### Requirement: Bookmark pages are in the navigation and in the saved pages
+The navigation's Saved entry SHALL open the bookmark page for the reader's language at every screen width, and both
+bookmark pages SHALL be in the list of pages saved for offline use.
 
 #### Scenario: Sidebar link
-- **WHEN** the reader is on a Bangla page and uses the bookmark entry in the sidebar
+- **WHEN** the reader is on a Bangla page and uses the Saved entry in the navigation
 - **THEN** `/bn/bookmark` opens
+
+#### Scenario: Navigation link on a phone
+- **WHEN** the reader on `/duas` on a 390px-wide screen uses the Saved entry in the bottom bar
+- **THEN** `/bookmark` opens
 
 #### Scenario: Saved pages list
 - **WHEN** the list of saved pages is built

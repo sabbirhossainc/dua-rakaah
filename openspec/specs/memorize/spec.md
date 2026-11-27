@@ -118,13 +118,17 @@ with their titles and working links, because the page carries a small index of e
 - **WHEN** the device is offline and they open `/memorize`
 - **THEN** both are listed with their titles and progress
 
-### Requirement: Memorize pages are in the sidebar and in the saved pages
-The memorize entry in the sidebar SHALL open the page for the reader's language, and both memorize pages SHALL be in
-the list of pages saved for offline use.
+### Requirement: Memorize pages are in the navigation and in the saved pages
+The navigation's Memorize entry SHALL open the memorize page for the reader's language at every screen width, and both
+memorize pages SHALL be in the list of pages saved for offline use.
 
 #### Scenario: Sidebar link
-- **WHEN** the reader is on a Bangla page and uses the memorize entry in the sidebar
+- **WHEN** the reader is on a Bangla page and uses the Memorize entry in the navigation
 - **THEN** `/bn/memorize` opens
+
+#### Scenario: Navigation link on a phone
+- **WHEN** the reader on `/duas` on a 390px-wide screen uses the Memorize entry in the bottom bar
+- **THEN** `/memorize` opens
 
 #### Scenario: Saved pages list
 - **WHEN** the list of saved pages is built
