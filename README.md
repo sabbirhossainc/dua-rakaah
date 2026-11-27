@@ -1,7 +1,7 @@
 # Dua & Raka'ah
 
 A web app that shows Islamic supplications (duas) grouped by category, with the Arabic text,
-transliteration and translation, in English and Bangla. Its look is modeled on duaruqyah.com.
+transliteration and translation, in English and Bangla. Its look follows its own style guide (see "Look and layout").
 
 It is one Next.js 16 app (React 19, Tailwind 4, Turbopack). The content lives in a read-only SQLite
 file that ships with the app. There is no separate API server.
@@ -11,7 +11,9 @@ app/                  routes and components
   page.js, bn/page.js     the home page           /, /bn (cards in components/home/)
   duas/               English pages           /duas, /duas/<slug>?cat=N
   bn/duas/            Bangla pages            /bn/duas, /bn/duas/<slug>?cat=N
-  components/         shared UI; components/content/ holds the dua cards and category pages
+  components/         the header, bottom bar, footer, Settings panel and controls; content/ holds the dua pages,
+                      home/ the home page, ui/ the shared component library
+  globals.css         the theme: colors for both themes, spacing, type and the shared styles
   sw.js, serwist/     the service worker and the route that serves it (offline use)
   offline/            the page shown for something that is not saved
   bookmark/, bn/bookmark/  the bookmark pages
@@ -35,7 +37,7 @@ data/bd-districts.json   Bangladesh's 64 district towns with coordinates (from G
 data/home-picks.json     the duas and hadith quotes picked by hand for the home page
 data/audio-sources.json  the Quran verses and recordings each dua part may play (generated: do not edit by hand)
 data/audio-review.json   a person's approvals and rejections of those matches
-public/               icons and category images
+public/               the app's mark (also the favicon), category images and the star pattern
 scripts/              smoke test, precache check, user-data setup and purge, database compaction, audio matching
 openspec/             specs, designs and tasks for each change
 plan.md               roadmap for the work still ahead
@@ -79,19 +81,54 @@ Open http://localhost:3000.
 | `/bn/duas`, `/bn/duas/<slug>?cat=<id>` | The same pages in Bangla |
 | `/bookmark`, `/bn/bookmark` | The reader's bookmarked duas (read from the browser, works offline) |
 | `/memorize`, `/bn/memorize` | The duas the reader has started memorizing, in progress and learned (read from the browser, works offline) |
-| `/account`, `/bn/account` | "Delete my data", linked from the top bar at every width (deleting needs a connection) |
+| `/account`, `/bn/account` | Sign-in state and "Delete my data" (deleting needs a connection), linked from the footer and the Settings panel |
 
 - `cat` decides which category is shown. The slug is only for readability: a wrong slug, or no `cat`, redirects
   (308) to the canonical URL, and an unknown category returns 404.
 - The language comes from the URL only. English has no prefix and Bangla lives under `/bn`. The language buttons
-  in the Settings panel (visible at 1536px and wider) switch between the two; `/` and `/bn` are each other's pair.
+  in the Settings panel switch between the two; `/` and `/bn` are each other's pair.
 - A dua that is stored across several rows in the database is shown as one card with several parts.
+
+## Look and layout
+
+The design is in `openspec/changes/archive/2026-11-27-redesign-app-ui/design.md`.
+
+- **Colors.** Emerald 900 `#0A2B25` and Emerald 800 `#0E3B33`, Sand 50 `#FBF8F2` and Sand 100 `#F4EDE0`, Gold
+  `#C9A34E`, and Gold text `#7A5B12` for gold-colored text. The light theme is sand with emerald; the dark theme is
+  emerald with sand. Every color is a named token in `app/globals.css`, used by role (`bg-surface`, `text-muted`).
+  `npm test` checks the contrast of the text pairs in both themes, and fails if any other file in `app/` sets a color
+  by hex value or palette class (`lib/theme.test.js`; `components/ui/icons.js` is the one exception).
+- **Typefaces**, all under the [SIL Open Font License 1.1](https://openfontlicense.org/), downloaded by
+  `next/font/google` when the app is built and served from the app's own origin, so they work offline:
+
+  | Typeface | Used for |
+  |---|---|
+  | [Fraunces](https://github.com/undercasetype/Fraunces) | Latin headings and the countdown |
+  | [Inter](https://github.com/rsms/inter) | Latin interface and body text |
+  | [Noto Sans Bengali](https://github.com/notofonts/bengali) | Bangla |
+  | [Scheherazade New](https://software.sil.org/scheherazade/) | Arabic dua text |
+
+  Text picks its typeface by its `lang`, so mark Arabic with `lang="ar"` and an English word inside Bangla with
+  `lang="en"`. A build needs a connection to fetch the fonts.
+- **Shared components** (`app/components/ui/`): buttons, tags, icon circles, cards, tiles, list cards, sections,
+  section headings, the page intro, sheets, segmented controls, selects, checklists, steps, empty states, notices,
+  ornaments, the icon set and the wordmark. Pages are built from these; one role uses one component. A component takes
+  a variant, never a color.
+- **Navigation.** Home, Duas, Saved, Memorize and Settings (`lib/nav.js`): a bar at the bottom of the screen below
+  1024px, links in the header from 1024px. Settings opens a panel on the current page, from the bottom on phones and
+  from the side from 768px. The sign-in button is in the header, and the support page is linked from the panel and the
+  footer. Every page has a skip link, one `h1` and the footer.
+- **Layout.** The document scrolls, under a sticky header. The duas pages show the category list as a column from
+  1280px; below that it opens from the "Categories" button. Supported from 320px.
 
 ## Home page
 
-`/` and `/bn` are built once, with the app, so every reader gets the same HTML. Their cards, in order: location and
-time, today, prayer times, countdown, duas, categories, hadith, donation. One column below 1280px, two from there.
-The design is in `openspec/changes/archive/2026-11-26-add-home-page/design.md`.
+`/` and `/bn` are built once, with the app, so every reader gets the same HTML. Their sections, in order: location and
+time, today, prayer times, countdown, duas, categories, hadith, donation. The first four form the prayer band, whose
+colors follow the current waqt (neutral until the time and place are known): one column on phones, two from 1024px,
+and from 1280px three, with the times in a row below. Below the band, the hadith and donation cards sit side by side
+from 1024px. The designs are in `openspec/changes/archive/2026-11-26-add-home-page/design.md` and
+`openspec/changes/archive/2026-11-27-redesign-app-ui/design.md`.
 
 - **Where the times come from.** The [adhan](https://github.com/batoulapps/adhan-js) library (MIT) computes them
   **in the browser**, by the University of Islamic Sciences, Karachi method with the Hanafi Asr. No service is asked,
@@ -121,7 +158,8 @@ Static-only hosting (`output: 'export'`) will not work. A service worker needs H
 After one online visit, every page can be read with no network: the 20 category pages in both languages, `/duas`,
 `/bn/duas`, `/`, `/bn`, `/support`, `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account`, `/bn/account`, and the icons, images, scripts, styles and fonts they use. A service worker
 (Serwist, `app/sw.js`) saves them. Anything else shows `/offline`, a short page that links back to `/duas`. The home
-page's prayer times, countdown, Hijri date and town list work offline too.
+page's prayer times, countdown, Hijri date and town list work offline too. The font files are saved with the build
+files (about 840 KB).
 
 - **Production builds only.** `npm run dev` never registers the worker, and removes one left on the same
   address by an earlier run. A worker belongs to an address (`localhost:3000`), so test production builds on
@@ -156,8 +194,7 @@ it).
   "Recitation: Quran Foundation", with the reciter's name from the moment play is pressed and answered. When the verses
   hold more than the card, it is also labeled "Full verse recitation". If Quran.com fails, the part's Hisn al-Muslim
   recording plays instead, under the credit "Recitation: Hisn al-Muslim".
-- **Reciter:** the Settings panel (visible at 1536px and wider) has "Audio / Reciter", a list of the verse-by-verse
-  reciters. Recitation 7 is selected until the reader chooses; the choice is saved and synced like other settings, and
+- **Reciter:** the Settings panel has "Reciter", a list of the verse-by-verse reciters. Recitation 7 is selected until the reader chooses; the choice is saved and synced like other settings, and
   applies from the next press on a part that is not playing or paused. The block is hidden offline and without
   credentials, and says so when the list cannot be loaded.
 - One recording plays at a time, and leaving the page stops it. **No audio, and no audio address, is requested until play
@@ -284,10 +321,9 @@ are in `openspec/changes/archive/2026-11-25-add-user-data-sync/design.md` (the s
 `openspec/changes/archive/2026-11-25-add-memorize/design.md` (memorize) and `openspec/changes/archive/2026-11-25-add-preferences/design.md`
 (settings).
 
-- **Settings.** The right bar (1536px and wider) has Font Settings (Arabic text size: small, medium, large, extra
-  large; medium is the original 28px) and Appearance Settings (light or dark). A choice applies at once, works
-  offline and follows the reader to every device after sign-in. Audio / Reciter (shown only when Quran.com audio is on)
-  sets `reciter_id`, the Quran.com reciter; see "Audio". Three setting names exist: `theme`, `arabic_font`, `reciter_id`; they are
+- **Settings.** The Settings panel has the Arabic text size (small, medium, large, extra large; medium is 28px) and
+  the appearance (light or dark). A choice applies at once, works offline and follows the reader to every device after
+  sign-in. "Reciter" (shown only when Quran.com audio is on) sets `reciter_id`, the Quran.com reciter; see "Audio". Three setting names exist: `theme`, `arabic_font`, `reciter_id`; they are
   listed with their valid values in `lib/preferences.js`. Two devices that change the same setting keep the newest
   change. **At sign-in the account's existing value wins**; the device's value is used only for a setting the account
   does not have yet (a change with `if_absent: 1`). Sign-out returns the device to light and medium.
@@ -297,7 +333,7 @@ are in `openspec/changes/archive/2026-11-25-add-user-data-sync/design.md` (the s
   IndexedDB wins once it has been read (`PreferencesApplier`).
 - **Key field.** A record's key is named by its type: `dua_id` for bookmarks and memorize, `pref_key` for settings.
 
-- **Memorize.** Every dua card has a memorize control (the third icon). It opens a panel with a "learned" checkbox
+- **Memorize.** Every dua card has a memorize control (beside the bookmark). It opens a panel with a "learned" checkbox
   and five progress steps (0, 25, 50, 75, 100). `/memorize` lists what the reader has started. Two devices that
   change the same dua keep the **further progress**; going backwards on purpose (un-ticking, lowering, starting over)
   is a reset that wins over older progress on every device (`reset_gen`).

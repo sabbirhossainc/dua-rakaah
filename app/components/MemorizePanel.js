@@ -1,6 +1,8 @@
 "use client";
 
 import { useId } from "react";
+import Button from "@/app/components/ui/Button";
+import SegmentedControl from "@/app/components/ui/SegmentedControl";
 import { memorize } from "@/lib/local/client";
 import { PROGRESS_STEPS } from "@/lib/local/apply";
 import { isStarted } from "@/lib/local/memorize";
@@ -27,52 +29,33 @@ export default function MemorizePanel({ duaId, lang, record, onClose, className 
           onClose();
         }
       }}
-      className={`rounded-lg bg-icon-bg p-4 ${className}`}
+      className={`expand rounded-card bg-tint p-card ${className}`}
     >
-      <label className="flex cursor-pointer items-center gap-2">
+      <label className="flex min-h-11 cursor-pointer items-center gap-3 text-ui">
         <input
           type="checkbox"
           checked={current.learned === 1}
           onChange={(event) => run(duaId, { kind: "learned", value: event.target.checked })}
-          className="h-4 w-4 accent-primary"
+          className="size-5 cursor-pointer accent-primary"
         />
         <span>{t(lang, "memorizeLearnedCheckbox")}</span>
       </label>
-      <fieldset className="mt-3">
-        <legend className="mb-1 text-sm text-gray-500 dark:text-gray-300">{t(lang, "memorizeProgressLabel")}</legend>
-        <div className="flex flex-wrap gap-2">
-          {PROGRESS_STEPS.map((step) => (
-            <label
-              key={step}
-              className="cursor-pointer rounded-full bg-surface px-3 py-1 text-sm has-[:checked]:bg-primary has-[:checked]:text-white has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary"
-            >
-              <input
-                type="radio"
-                name={name}
-                value={step}
-                checked={current.progress === step}
-                onChange={() => run(duaId, { kind: "progress", value: step })}
-                className="sr-only"
-                aria-label={fmt(lang, "memorizeStep", { n: step })}
-              />
-              <span aria-hidden="true">{step}%</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          disabled={!isStarted(record)}
-          onClick={() => run(duaId, { kind: "startOver" })}
-          className="text-sm text-primary underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline"
-        >
+      <SegmentedControl
+        className="mt-3"
+        legend={t(lang, "memorizeProgressLabel")}
+        name={name}
+        value={current.progress}
+        onChange={(step) => run(duaId, { kind: "progress", value: step })}
+        options={PROGRESS_STEPS.map((step) => ({ value: step, label: `${step}%`, name: fmt(lang, "memorizeStep", { n: step }) }))}
+      />
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <Button variant="ghost" disabled={!isStarted(record)} onClick={() => run(duaId, { kind: "startOver" })}>
           {t(lang, "memorizeStartOver")}
-        </button>
+        </Button>
         {onClose && (
-          <button type="button" onClick={onClose} className="text-sm text-gray-500 dark:text-gray-300 underline">
+          <Button variant="outline" onClick={onClose}>
             {t(lang, "memorizeClose")}
-          </button>
+          </Button>
         )}
       </div>
     </div>

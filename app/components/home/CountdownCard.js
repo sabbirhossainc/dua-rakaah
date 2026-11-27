@@ -1,6 +1,6 @@
 "use client";
-// A ring that empties as the current period passes, with the time left until it ends (design D9).
-import HomeCard from "@/app/components/home/HomeCard";
+// The time left until the current period ends, over a ring that empties as it passes (design D9).
+import BandSection from "@/app/components/home/BandSection";
 import { prayerName } from "@/app/components/home/prayer-names";
 import { fmt, t } from "@/lib/i18n";
 import { durationParts, formatDuration, formatNumber } from "@/lib/prayer/dates";
@@ -27,14 +27,15 @@ function sentence(waqt, lang) {
 /** `times` is undefined before the scripts run, and null when they cannot be computed: then there is no countdown. */
 export default function CountdownCard({ lang, times, waqt }) {
   return (
-    <HomeCard title={t(lang, "homeCountdownTitle")} data-home-card="countdown" className="flex flex-col">
+    <BandSection title={t(lang, "homeCountdownTitle")} data-home-card="countdown" className="xl:order-3">
       {times === null ? (
-        <p>{t(lang, "prayerUnavailable")}</p>
+        <p className="text-reading">{t(lang, "prayerUnavailable")}</p>
       ) : (
-        <div className="flex grow flex-col items-center justify-center">
-          <div className="relative aspect-square w-full max-w-64">
+        <>
+          {/* The ring and the track take the band's ink, so they stand out in every period. */}
+          <div className="relative size-32">
             <svg viewBox="0 0 120 120" aria-hidden="true" className="h-full w-full -rotate-90">
-              <circle cx="60" cy="60" r={RADIUS} fill="none" strokeWidth="8" className="stroke-line" />
+              <circle cx="60" cy="60" r={RADIUS} fill="none" stroke="currentColor" strokeOpacity="0.2" strokeWidth="8" />
               {waqt && (
                 <circle
                   data-ring
@@ -42,33 +43,32 @@ export default function CountdownCard({ lang, times, waqt }) {
                   cy="60"
                   r={RADIUS}
                   fill="none"
+                  stroke="currentColor"
                   strokeWidth="8"
                   strokeDasharray={`${LENGTH * (1 - waqt.progress)} ${LENGTH}`}
-                  className="stroke-primary transition-[stroke-dasharray] duration-1000 ease-linear motion-reduce:transition-none"
+                  className="transition-[stroke-dasharray] duration-1000 ease-linear motion-reduce:transition-none"
                 />
               )}
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-              {waqt ? (
-                <>
-                  {waqt.current && <p className="text-xl font-semibold">{prayerName(waqt.current, lang)}</p>}
-                  <p className="text-3xl tabular-nums" data-time-left>
-                    {formatDuration(waqt.remainingMs, lang)}
-                  </p>
-                  <p className="home-subtle text-sm">
-                    {fmt(lang, "countdownUntil", { name: prayerName(waqt.next, lang) })}
-                  </p>
-                </>
-              ) : (
-                <p className="home-subtle">{t(lang, "homeLoading")}</p>
-              )}
-            </div>
+            <p className="absolute inset-0 flex items-center justify-center px-4 font-heading text-card-title">
+              {waqt?.current && prayerName(waqt.current, lang)}
+            </p>
           </div>
+          {waqt ? (
+            <>
+              <p className="font-heading text-countdown" data-time-left>
+                {formatDuration(waqt.remainingMs, lang)}
+              </p>
+              <p className="text-ui">{fmt(lang, "countdownUntil", { name: prayerName(waqt.next, lang) })}</p>
+            </>
+          ) : (
+            <p className="text-ui">{t(lang, "homeLoading")}</p>
+          )}
           <p className="sr-only" aria-live="off" data-countdown-sentence>
             {waqt && sentence(waqt, lang)}
           </p>
-        </div>
+        </>
       )}
-    </HomeCard>
+    </BandSection>
   );
 }

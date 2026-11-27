@@ -1,107 +1,32 @@
 "use client";
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+// The sign-in or sign-out button, with the warning shown before signing out while changes haven't synced.
+import { useEffect, useId, useState } from "react";
 import { usePathname } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { finishPendingSignOut } from "@/app/components/AccountWatcher";
+import Button from "@/app/components/ui/Button";
+import Sheet from "@/app/components/ui/Sheet";
 import { getDb } from "@/lib/local/db";
 import { getRunner, onRunnerEvent } from "@/lib/local/client";
-import {
-  completePendingSignOut,
-  completeSignIn,
-  currentAccount,
-  isSignOutPending,
-  purgeExpiredKept,
-  signOutLocal,
-  unsyncedCount,
-} from "@/lib/local/account";
+import { signOutLocal, unsyncedCount } from "@/lib/local/account";
 import { useAccount } from "@/lib/local/account-store";
-import { remoteSignOut } from "@/lib/local/remote-sign-out";
 import { langFromPathname } from "@/lib/content";
 import { fmt, t } from "@/lib/i18n";
 
-async function readSession() {
-  try {
-    const res = await fetch("/api/auth/session", { cache: "no-store" });
-    if (!res.ok) return undefined;
-    const session = await res.json();
-    return session?.accountId ? { accountId: session.accountId } : null;
-  } catch {
-    return undefined; // offline: leave things as they are
-  }
-}
-
-export default function AccountControl() {
+export default function AccountControl({ variant = "outline", className = "" }) {
   const lang = langFromPathname(usePathname());
   const { ready, account } = useAccount(); // read live from the local store, so it also works offline
   const [confirm, setConfirm] = useState(null); // { count } while the unsynced-changes warning is open
-  const [deletedNotice, setDeletedNotice] = useState(false);
-  const cancelRef = useRef(null);
-  const busy = useRef(false);
+  const warningId = useId();
 
-  const finishPendingSignOut = useCallback(async () => {
-    const done = await completePendingSignOut(getDb(), remoteSignOut);
-    if (done) getRunner().sync().catch(() => {});
-  }, []);
-
-  // Brings this device in line with the server's idea of who is signed in (design D8).
-  const refresh = useCallback(async () => {
-    if (busy.current) return;
-    busy.current = true;
-    try {
-      const db = getDb();
-      await purgeExpiredKept(db);
-      await finishPendingSignOut();
-      const session = await readSession();
-      const local = await currentAccount(db);
-      if (session === undefined || (await isSignOutPending(db))) {
-        // The device was cleared meanwhile and the session is about to end, or:
-        // Offline or the server did not answer: leave things as they are.
-      } else if (session && session.accountId !== local) {
-        if (local) await signOutLocal(db, { keepUnsynced: true }); // another account signed in: keep the old one's unsent changes
-        await completeSignIn(db, session.accountId);
-        getRunner().sync().catch(() => {});
-      } else if (!session && local) {
-        // The session ended (it expired, or the reader signed out in another tab).
-        // If it ended because the account was deleted, this clears the device and tells the reader.
-        await getRunner().checkDeleted();
-        if ((await currentAccount(db)) === local) await signOutLocal(db, { keepUnsynced: true });
-        await finishPendingSignOut();
-      }
-    } catch (error) {
-      console.error("Could not check the account:", error);
-    } finally {
-      busy.current = false;
-    }
-  }, [finishPendingSignOut]);
-
-  useEffect(() => {
-    if (typeof indexedDB === "undefined") return undefined;
-    refresh();
-    window.addEventListener("online", refresh);
-    const stopListening = onRunnerEvent((event) => {
-      if (event.type === "signed_out") refresh();
-      if (event.type === "deleted") {
-        setConfirm(null);
-        setDeletedNotice(true);
-        finishPendingSignOut().catch((error) => console.error("Could not sign out:", error));
-      }
-    });
-    return () => {
-      window.removeEventListener("online", refresh);
-      stopListening();
-    };
-  }, [refresh, finishPendingSignOut]);
-
-  useEffect(() => {
-    if (!confirm) return undefined;
-    cancelRef.current?.focus();
-    const onKey = (event) => {
-      if (event.key === "Escape") setConfirm(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [confirm]);
+  // A deletion on this device ends the sign-in, so there is nothing left to confirm.
+  useEffect(
+    () =>
+      onRunnerEvent((event) => {
+        if (event.type === "deleted") setConfirm(null);
+      }),
+    [],
+  );
 
   async function handleSignIn() {
     try {
@@ -133,62 +58,34 @@ export default function AccountControl() {
   if (!ready) return null;
   return (
     <>
-      <button
-        type="button"
-        onClick={account ? handleSignOut : handleSignIn}
-        className="mr-3 whitespace-nowrap rounded-md border border-solid border-line bg-surface px-3 py-1 text-sm hover:bg-icon-bg"
-      >
+      <Button variant={variant} onClick={account ? handleSignOut : handleSignIn} className={`whitespace-nowrap ${className}`}>
         {t(lang, account ? "signOut" : "signIn")}
-      </button>
-      {deletedNotice &&
-        createPortal(
-          <div
-            role="status"
-            lang={lang}
-            className="fixed top-4 left-1/2 z-50 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-lg border border-solid border-line bg-surface px-4 py-3 text-sm shadow-lg"
-          >
-            <span>{t(lang, "dataDeletedNotice")}</span>
-            <button type="button" onClick={() => setDeletedNotice(false)} className="px-2 py-1 underline">
-              {t(lang, "dismiss")}
-            </button>
-          </div>,
-          document.body
-        )}
-      {confirm &&
-        // In a portal on <body>: the top bar sits in a container with a negative z-index (see app/layout.js),
-        // and a dialog inside it would be drawn behind the page.
-        createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="unsynced-warning"
-            className="mx-4 max-w-md rounded-lg bg-surface p-6 shadow-lg"
-          >
-            <p id="unsynced-warning">
+      </Button>
+      <Sheet
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        title={t(lang, "signOut")}
+        closeLabel={t(lang, "sheetClose")}
+        lang={lang}
+        role="alertdialog"
+        aria-describedby={warningId}
+      >
+        {confirm && (
+          <>
+            <p id={warningId} className="text-reading">
               {confirm.count === 1 ? t(lang, "unsyncedOne") : fmt(lang, "unsyncedMany", { count: confirm.count })}
             </p>
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                ref={cancelRef}
-                type="button"
-                onClick={() => setConfirm(null)}
-                className="rounded-md border border-solid border-line px-4 py-2"
-              >
+            <div className="flex flex-wrap justify-end gap-3">
+              <Button variant="outline" data-autofocus onClick={() => setConfirm(null)}>
                 {t(lang, "cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={() => finishSignOut(true).catch((error) => console.error("Could not sign out:", error))}
-                className="rounded-md bg-primary px-4 py-2 text-white"
-              >
+              </Button>
+              <Button onClick={() => finishSignOut(true).catch((error) => console.error("Could not sign out:", error))}>
                 {t(lang, "signOutConfirm")}
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>,
-        document.body
+          </>
         )}
+      </Sheet>
     </>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { useId, useState } from "react";
 import { useMemorize } from "@/lib/local/memorize-store";
 import { isStarted } from "@/lib/local/memorize";
 import MemorizePanel from "@/app/components/MemorizePanel";
+import Button from "@/app/components/ui/Button";
+import Tag from "@/app/components/ui/Tag";
+import { Icon } from "@/app/components/ui/icons";
 import { fmt, t } from "@/lib/i18n";
 
 /** The name a screen reader hears: what the control is, and the state the dua is in. */
@@ -16,18 +18,21 @@ export function memorizeStateLabel(lang, record) {
 
 // The memorize control on a dua card (design D7). The panel opens inline, as a full-width item of the icon row, so
 // the card's overflow cannot clip it. Cards render "not started" until the first local read finishes.
-export default function MemorizeButton({ duaId, lang }) {
+export default function MemorizeButton({ duaId, lang, showState = true, className = "" }) {
   const { byId } = useMemorize();
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const record = byId.get(duaId);
   const learned = record?.learned === 1;
   const started = isStarted(record);
+  // Where the row already shows the state (the memorize page), the button is the icon alone.
+  const tagged = showState && started;
   const label = `${t(lang, "memorizeControl")}: ${memorizeStateLabel(lang, record)}`;
   return (
     <>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        icon="memorize"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-label={label}
@@ -36,20 +41,14 @@ export default function MemorizeButton({ duaId, lang }) {
         onKeyDown={(event) => {
           if (event.key === "Escape" && open) setOpen(false);
         }}
-        className={`relative w-6 cursor-pointer rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
-          learned ? "rounded-full ring-2 ring-primary" : ""
-        }`}
+        className={`${tagged ? "px-3!" : ""} ${className}`}
       >
-        <Image src="/icons/plan.svg" width={24} height={24} alt="" aria-hidden="true" />
-        {started && (
-          <span
-            aria-hidden="true"
-            className="absolute -right-3 -top-3 rounded-full bg-primary px-1 text-[10px] leading-4 text-white"
-          >
-            {learned ? "✓" : `${record.progress}%`}
-          </span>
-        )}
-      </button>
+        {tagged ? (
+          <Tag variant={learned ? "gold" : "tint"} aria-hidden="true">
+            {learned ? <Icon name="check" size={16} /> : `${record.progress}%`}
+          </Tag>
+        ) : null}
+      </Button>
       {open && (
         <div id={panelId} className="order-last w-full basis-full">
           <MemorizePanel duaId={duaId} lang={lang} record={record} onClose={() => setOpen(false)} />

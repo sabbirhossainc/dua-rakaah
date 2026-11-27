@@ -1,61 +1,605 @@
 @import 'tailwindcss';
 
+/*
+  The design tokens (design D2). Light values here; the dark theme redefines them below. Classes read as roles
+  (bg-surface, text-muted, bg-primary). No color is set anywhere else: lib/theme.test.js checks it.
+*/
+/* The font variables come from next/font (app/layout.js), so Tailwind's own families are removed. */
 @theme {
+  --font-*: initial;
+}
+
+@theme static {
+  /* Tailwind's defaults except sm, restated in px so every breakpoint uses the same unit (design D5). */
   --breakpoint-sm: 480px;
   --breakpoint-md: 768px;
-  --breakpoint-lg: 976px;
-  --breakpoint-xl: 1440px;
-  /* v3 default, restated in px so every breakpoint uses the same unit */
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
 
-  --color-primary: #1fa45b;
-  --color-dua-bg: #f7f8fa;
-  --color-icon-bg: #e8f0f5;
-
-  /* Semantic colors: light values are the ones the app always had; dark values are set below (design D6). */
+  --color-page: #fbf8f2;
   --color-surface: #ffffff;
-  --color-page: #ebeef2;
-  --color-ink: #000000;
-  --color-line: #cccdcf;
-  --color-muted: #868686;
+  --color-sand: #f4ede0;
+  --color-tint: #e8f1ec;
+  --color-gold-tint: #f7eeda;
+  --color-raised: #eee7d8;
+  --color-ink: #0a2b25;
+  --color-body: #1e2b28;
+  --color-muted: #56655f;
+  --color-line: #e6dfd1;
+  --color-primary: #0e3b33;
+  --color-on-primary: #fbf8f2;
+  --color-gold: #c9a34e;
+  --color-on-gold: #0a2b25;
+  --color-gold-text: #7a5b12;
+  --color-focus: #0e3b33;
+  --color-danger: #9b2c1f;
+  /* The dark emerald band of the footer and the call-to-action card, in both themes. */
+  --color-emerald: #0e3b33;
+  --color-on-emerald: #fbf8f2;
+  /* The star lattice behind the home page (design D9). */
+  --color-pattern: rgb(14 59 51 / 0.07);
+
+  /* Shape and depth. Pills and circles use rounded-full. */
+  --radius-tile: 14px;
+  --radius-card: 16px;
+  --radius-sheet: 24px;
+  --radius-band: 24px;
+  --shadow-card: 0 1px 2px rgb(10 43 37 / 0.06);
+  --shadow-sheet: 0 -8px 32px rgb(10 43 37 / 0.18);
+
+  /* Content is 1200px wide at most; reading text 720px, about 72 characters of 18px Inter. */
+  --container-content: 1200px;
+  --container-reading: 720px;
+}
+
+/*
+  The spacing scale, in units of 4px, chosen by the screen width only. Classes: px-side, py-section, gap-cards,
+  gap-tiles, p-card, mt-heading, and so on.
+*/
+:root {
+  --space-side: 16px;
+  --space-section: 40px;
+  --space-cards: 16px;
+  --space-tiles: 12px;
+  --space-card: 20px;
+  --space-heading: 20px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --space-side: 24px;
+    --space-section: 56px;
+    --space-cards: 20px;
+    --space-card: 24px;
+    --space-heading: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --space-side: 32px;
+    --space-section: 72px;
+    --space-cards: 24px;
+    --space-tiles: 16px;
+    --space-heading: 28px;
+  }
+}
+
+@theme inline {
+  --spacing-side: var(--space-side);
+  --spacing-section: var(--space-section);
+  --spacing-cards: var(--space-cards);
+  --spacing-tiles: var(--space-tiles);
+  --spacing-card: var(--space-card);
+  --spacing-heading: var(--space-heading);
+}
+
+/*
+  The type scale (design D3): 12, 14, 16, 18, 21, 24, 30, 36, 48, 60px, by role. Bangla gets taller lines for its
+  vowel signs, and its smallest text is 15px.
+*/
+@utility text-title {
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 600;
+
+  @media (min-width: 768px) {
+    font-size: 36px;
+  }
+}
+
+@utility text-section {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+
+  @media (min-width: 768px) {
+    font-size: 30px;
+  }
+}
+
+@utility text-card-title {
+  font-size: 21px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+@utility text-reading {
+  font-size: 18px;
+  line-height: 1.6;
+
+  &:lang(bn) {
+    line-height: 1.8;
+  }
+}
+
+@utility text-ui {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+@utility text-label {
+  font-size: 14px;
+  line-height: 1.4;
+
+  &:lang(bn) {
+    font-size: 15px;
+  }
+}
+
+/* The time left. The display optical size follows from the font size. */
+@utility text-countdown {
+  font-size: 60px;
+  line-height: 1;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Arabic dua text: the reader's size, with lines twice as tall so vowel marks don't collide. */
+@utility text-arabic {
+  font-size: var(--arabic-size, 28px);
+  line-height: calc(var(--arabic-size, 28px) * 2);
 }
 
 /* The dark theme is chosen by the reader and set as data-theme on <html> (inline script and applier). */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root[data-theme="dark"] {
-  --color-surface: #1c2024;
-  --color-page: #0f1114;
-  --color-ink: #e6e8eb;
-  --color-line: #3a4047;
-  --color-muted: #9aa1a9;
-  --color-dua-bg: #23282d;
-  --color-icon-bg: #2b3238;
-  --color-pattern: rgb(200 210 220 / 0.07);
-  --color-accent-text: #3cc47a;
-  --color-subtle: #a7aeb6;
+  --color-page: #0a2b25;
+  --color-surface: #0e3b33;
+  --color-sand: #123f37;
+  --color-tint: #123f37;
+  --color-gold-tint: #2b2a17;
+  --color-raised: #14493f;
+  --color-ink: #f4ede0;
+  --color-body: #e9e3d6;
+  --color-muted: #b5c2bc;
+  --color-line: #1f5248;
+  --color-primary: #c9a34e;
+  --color-on-primary: #0a2b25;
+  --color-gold: #c9a34e;
+  --color-on-gold: #0a2b25;
+  --color-gold-text: #d9b970;
+  --color-focus: #c9a34e;
+  --color-danger: #f0a898;
+  --color-emerald: #06201b;
+  --color-on-emerald: #f4ede0;
+  --color-pattern: rgb(201 163 78 / 0.07);
   color-scheme: dark;
-}
-
-/* Home page (design D10): the background pattern, and text colors that keep 4.5:1 on a card in both themes. */
-:root:not([data-theme="dark"]) {
-  --color-pattern: rgb(31 164 91 / 0.16);
-  --color-accent-text: #0f7a41;
-  --color-subtle: #5c636b;
 }
 
 body {
   background-color: var(--color-page);
-  color: var(--color-ink);
+  color: var(--color-body);
+}
+
+/* What is scrolled to, by a link or by the keyboard, stays clear of the sticky header and the bottom bar. */
+html {
+  scroll-padding-top: calc(var(--header-height) + 8px);
+  scroll-padding-bottom: var(--bottom-bar);
+}
+
+/* A typeface for each script and role, chosen by the language of the text (design D3). */
+html {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+:lang(bn) {
+  font-family: var(--font-bangla), var(--font-sans), sans-serif;
+}
+
+:lang(ar) {
+  font-family: var(--font-arabic), serif;
+}
+
+/* English words inside a Bangla page, such as the "English" button. */
+[lang="en"] {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.font-heading {
+  font-family: var(--font-heading), serif;
+}
+
+/* Fraunces has no Bangla, so Bangla headings are the Bangla typeface at 600. */
+.font-heading:lang(bn) {
+  font-family: var(--font-bangla), var(--font-sans), sans-serif;
+  font-weight: 600;
+}
+
+/* ---- shared component styles (design D4, D5) ---- */
+
+/* The heights of the sticky header and of the bottom bar, which exists below 1024px. */
+:root {
+  --header-height: 64px;
+  --bottom-bar: calc(64px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --bottom-bar: 0px;
+  }
+}
+
+/* The 1200px content container with the page's side margin. */
+@utility container-page {
+  width: 100%;
+  max-width: calc(var(--container-content) + 2 * var(--space-side));
+  margin-inline: auto;
+  padding-inline: var(--space-side);
+}
+
+/* After a page intro, the first section starts a heading's gap below it, not a whole section's. */
+[data-page-intro] + section > .container-page {
+  padding-top: var(--space-heading);
+}
+
+/* In the dua column beside the category list, the page already has its margins. */
+.content-column .container-page {
+  max-width: none;
+  padding-inline: 0;
 }
 
 /*
-  The home page. Its pattern is one tile used as a mask over a full-page layer, so one file serves both themes and
-  follows data-theme with no flash. The layer hangs on <body> because the z-index contexts of the layout would
-  otherwise lift it over the side bars.
+  Emerald surfaces (the footer and the call-to-action card): the same components, with the theme's names pointing at
+  the colors that read on emerald. The focus ring turns gold.
 */
-body:has([data-home])::before {
-  content: "";
+.on-emerald {
+  --color-ink: var(--color-on-emerald);
+  --color-body: var(--color-on-emerald);
+  --color-muted: var(--color-on-emerald);
+  --color-primary: var(--color-gold);
+  --color-on-primary: var(--color-on-gold);
+  --color-gold-text: var(--color-gold);
+  --color-focus: var(--color-gold);
+  --color-line: color-mix(in srgb, var(--color-gold) 35%, transparent);
+  --color-tint: var(--color-on-gold);
+  --color-surface: var(--color-tint);
+  --color-sand: var(--color-tint);
+  --color-gold-tint: var(--color-tint);
+  --color-raised: var(--color-tint);
+  --color-danger: #f0a898;
+  background-color: var(--color-emerald);
+  color: var(--color-body);
+}
+
+/* The star lattice, in gold over emerald. One tile used as a mask, so one file serves every color. */
+.lattice {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-color: var(--color-gold);
+  opacity: 0.16;
+  mask: url("/images/home-pattern.svg") repeat;
+  mask-size: 96px 96px;
+}
+
+/* The current row of a list: an outline, a bar at the start and a heavier title. */
+.list-card:has(> [aria-current="page"]) {
+  border-color: var(--color-primary);
+  background-color: var(--color-raised);
+  box-shadow: inset 4px 0 0 var(--color-primary);
+}
+
+.list-card:has(> [aria-current="page"]) .list-card-title {
+  font-weight: 700;
+}
+
+/* A floating notice, above the bottom bar. */
+.notice {
+  position: fixed;
+  z-index: 50;
+  right: var(--space-side);
+  bottom: calc(var(--bottom-bar) + 12px);
+  left: var(--space-side);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  max-width: 36rem;
+  margin-inline: auto;
+  padding: 12px 16px;
+}
+
+/* The sheet: from the bottom on phones, from the side from 768px. It slides only when motion is welcome. */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 85dvh;
+  margin: 0;
+  padding: 0 0 env(safe-area-inset-bottom);
+  border: 0;
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  background-color: var(--color-surface);
+  color: var(--color-body);
+  box-shadow: var(--shadow-sheet);
+}
+
+.sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet::backdrop {
+  background-color: rgb(4 22 17 / 0.5);
+}
+
+@media (min-width: 768px) {
+  .sheet {
+    inset: 0 0 0 auto;
+    width: 400px;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: var(--radius-sheet) 0 0 var(--radius-sheet);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sheet[open] {
+    animation: sheet-up 200ms ease-out;
+  }
+
+  .sheet[open]::backdrop {
+    animation: fade-in 200ms ease-out;
+  }
+
+  @media (min-width: 768px) {
+    .sheet[open] {
+      animation-name: sheet-side;
+    }
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes sheet-side {
+  from {
+    translate: 100% 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* From 1280px the category list's sheet is a column of the page, below the header, that scrolls on its own. */
+@media (min-width: 1280px) {
+  .sheet.sheet-column:not(:modal) {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    inset: auto;
+    top: calc(var(--header-height) + var(--space-heading));
+    width: auto;
+    height: auto;
+    max-height: calc(100dvh - var(--header-height) - 2 * var(--space-heading));
+    margin-top: var(--space-heading);
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
+  }
+
+  /* No padding of a sheet, no close button; the few pixels keep the focus rings from being clipped. */
+  .sheet.sheet-column:not(:modal) > [data-sheet-body] {
+    padding: 6px;
+  }
+
+  .sheet.sheet-column:not(:modal) .sheet-close {
+    display: none;
+  }
+}
+
+/* The memorize panel opens downward. */
+@media (prefers-reduced-motion: no-preference) {
+  .expand {
+    animation: expand-in 200ms ease-out;
+  }
+}
+
+@keyframes expand-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+  }
+
+  to {
+    clip-path: inset(0);
+  }
+}
+
+/* The page behind an open sheet doesn't scroll. */
+html:has(.sheet:modal) {
+  overflow: hidden;
+}
+
+/*
+  The home page's prayer band (design D9): a vertical gradient that stands for the sky, and the ink on it, for each
+  period of the day. lib/theme.test.js checks the ink against both ends of every gradient.
+*/
+
+[data-home-band][data-waqt="neutral"] {
+  --band-from: #f4ede0;
+  --band-to: #fbf8f2;
+  --band-ink: #0a2b25;
+}
+
+:root[data-theme="dark"] [data-home-band][data-waqt="neutral"] {
+  --band-from: #0e3b33;
+  --band-to: #0a2b25;
+  --band-ink: #f4ede0;
+}
+
+[data-home-band][data-waqt="fajr"] {
+  --band-from: #e6e1ec;
+  --band-to: #f6e9e1;
+  --band-ink: #0a2b25;
+}
+
+:root[data-theme="dark"] [data-home-band][data-waqt="fajr"] {
+  --band-from: #262b45;
+  --band-to: #3a2f42;
+  --band-ink: #f4ede0;
+}
+
+[data-home-band][data-waqt="forenoon"] {
+  --band-from: #e8f1ec;
+  --band-to: #fbf8f2;
+  --band-ink: #0a2b25;
+}
+
+:root[data-theme="dark"] [data-home-band][data-waqt="forenoon"] {
+  --band-from: #123f37;
+  --band-to: #0e3b33;
+  --band-ink: #f4ede0;
+}
+
+[data-home-band][data-waqt="dhuhr"] {
+  --band-from: #dcebe4;
+  --band-to: #f8f4e9;
+  --band-ink: #0a2b25;
+}
+
+:root[data-theme="dark"] [data-home-band][data-waqt="dhuhr"] {
+  --band-from: #17504a;
+  --band-to: #0e3b33;
+  --band-ink: #f4ede0;
+}
+
+[data-home-band][data-waqt="asr"] {
+  --band-from: #ead7a4;
+  --band-to: #f4ede0;
+  --band-ink: #3b2c06;
+}
+
+:root[data-theme="dark"] [data-home-band][data-waqt="asr"] {
+  --band-from: #3d3216;
+  --band-to: #2b2510;
+  --band-ink: #f4ede0;
+}
+
+[data-home-band][data-waqt="maghrib"] {
+  --band-from: #e3a97c;
+  --band-to: #cc8a6a;
+  --band-ink: #2b130c;
+}
+
+:root[data-theme="dark"] [data-home-band][data-waqt="maghrib"] {
+  --band-from: #4a2620;
+  --band-to: #38201b;
+  --band-ink: #f4ede0;
+}
+
+[data-home-band][data-waqt="isha"] {
+  --band-from: #0e3b33;
+  --band-to: #0a2b25;
+  --band-ink: #f4ede0;
+}
+
+:root[data-theme="dark"] [data-home-band][data-waqt="isha"] {
+  --band-from: #06201b;
+  --band-to: #041611;
+  --band-ink: #f4ede0;
+}
+
+/* Registered as colors, so that the gradient can move from one period's colors to the next. */
+@property --band-from {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --band-to {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --band-ink {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+[data-home-band] {
+  background-image: linear-gradient(to bottom, var(--band-from), var(--band-to));
+  color: var(--band-ink);
+}
+
+/* The one animation nobody starts (design D10). The ink turns over halfway, when the sky is between the two. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-home-band] {
+    transition:
+      --band-from 1.2s,
+      --band-to 1.2s,
+      --band-ink 0.2s linear 0.5s;
+  }
+}
+
+/* Night: the lattice shows faintly over the band, and a focus ring outside a panel is gold. */
+[data-home-band] > .lattice {
+  display: none;
+  border-radius: inherit;
+}
+
+[data-home-band][data-waqt="isha"] {
+  --color-focus: var(--color-gold);
+}
+
+[data-home-band][data-waqt="isha"] > .lattice {
+  display: block;
+  opacity: 0.1;
+}
+
+/* A panel on the band, for controls and the current prayer: nearly the surface color, whatever the period. */
+.band-panel {
+  --color-focus: var(--color-primary);
+  border-radius: var(--radius-tile);
+  background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  color: var(--color-body);
+  padding: 12px;
+}
+
+li.band-panel {
+  padding-block: 4px;
+}
+
+@media (min-width: 1280px) {
+  li.band-panel {
+    padding-block: 12px;
+  }
+}
+
+/* The lattice behind the home page: one tile used as a mask, so one file serves both themes. */
+.page-pattern {
   position: fixed;
   inset: 0;
   z-index: -1;
@@ -65,88 +609,30 @@ body:has([data-home])::before {
   mask-size: 96px 96px;
 }
 
-/*
-  From 976px the layout fixes its frame to the window, which leaves a long page with nothing that scrolls. The home
-  page is long, so there the frame stays in the document and the page scrolls as usual.
-*/
-@media (min-width: 976px) {
-  body:has([data-home]) [data-shell] {
-    position: relative;
-  }
-}
-
-/* From 1440px to 1535px the layout puts page content in its 350px column only. The home page takes the rest too. */
-@media (min-width: 1440px) and (max-width: 1535.98px) {
-  div:has(> [data-home]) {
-    grid-column: 2 / -1;
-  }
-}
-
-.home-accent {
-  color: var(--color-accent-text);
-}
-
-.home-subtle {
-  color: var(--color-subtle);
-}
-
-/* White text needs a darker green than --color-primary to reach 4.5:1, in both themes. */
-.home-button {
-  background-color: #0f7a41;
-  color: #fff;
-}
-
-/* The category cards are the /duas ones, unchanged. Inside a card they need their own shade and readable small text. */
-[data-home] [data-category-card] {
-  background-color: var(--color-dua-bg);
-}
-
-[data-home] [data-category-card]:hover {
-  background-color: var(--color-icon-bg);
-}
-
-[data-home] [data-category-card] .text-gray-400 {
-  color: var(--color-subtle);
-}
-
-[data-home] [data-category-card] > div:first-child {
-  background-color: var(--color-surface);
-}
-
-[data-home] [data-category-card] > div:last-child {
-  border-color: var(--color-line);
-}
-
-[data-home] [data-home-card="categories"] > div {
-  padding-bottom: 0;
-}
-
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
+  /* A border with no color of its own takes the theme's line color. */
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-line);
   }
 
-  /* v3 gave buttons a pointer cursor; v4 uses the browser default. */
+  /* The focus ring of every control: 3:1 against what is around it, gold on emerald (the visual-theme spec). */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Tailwind 4 leaves buttons with the browser's default cursor. */
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
 
-  /* v3 placeholders were gray-400; v4 uses the text color at 50% opacity. */
   input::placeholder,
   textarea::placeholder {
-    color: var(--color-gray-400);
+    color: var(--color-muted);
   }
 }

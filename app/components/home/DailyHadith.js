@@ -8,9 +8,9 @@ export default function DailyHadith({ lang, quotes }) {
   const today = useTodayInPlace();
   const index = today && quotes.length ? dayIndex(today, quotes.length) : 0;
   return quotes.map((quote, i) => (
-    <figure key={quote.key} hidden={i !== index} data-home-quote={quote.key}>
-      <blockquote className="leading-8 whitespace-pre-line">{quote.text}</blockquote>
-      <figcaption className="home-subtle mt-3 text-sm whitespace-pre-line">
+    <figure key={quote.key} hidden={i !== index} data-home-quote={quote.key} className="max-w-reading">
+      <blockquote className="font-heading text-card-title whitespace-pre-line text-ink italic">{quote.text}</blockquote>
+      <figcaption className="mt-3 text-label whitespace-pre-line text-gold-text">
         {t(lang, "reference")}: {quote.reference}
       </figcaption>
     </figure>

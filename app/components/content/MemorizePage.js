@@ -1,4 +1,6 @@
 import MemorizeList from "@/app/components/MemorizeList";
+import PageIntro from "@/app/components/ui/PageIntro";
+import Section from "@/app/components/ui/Section";
 import { buildContentIndex } from "@/lib/content-index";
 import { getAllDuas, getCategories } from "@/lib/db";
 import { t } from "@/lib/i18n";
@@ -8,9 +10,13 @@ import { t } from "@/lib/i18n";
 export default function MemorizePage({ lang }) {
   const index = buildContentIndex({ categories: getCategories(), duaRows: getAllDuas() }, lang);
   return (
-    <div lang={lang} className="w-full max-w-3xl">
-      <h1 className="mb-5 text-2xl">{t(lang, "memorizeTitle")}</h1>
-      <MemorizeList lang={lang} index={index} />
+    <div lang={lang}>
+      <PageIntro title={t(lang, "memorizeTitle")} lead={t(lang, "memorizeLead")} />
+      <Section>
+        <div className="max-w-[760px]">
+          <MemorizeList lang={lang} index={index} />
+        </div>
+      </Section>
     </div>
   );
 }

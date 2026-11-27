@@ -1,6 +1,7 @@
 "use client";
-// The Arabic text size choice (design D7): a native radio group, so arrow keys, focus and the selected state come from the browser.
+// The Arabic text size choice (design D7).
 import { usePathname } from "next/navigation";
+import SegmentedControl from "@/app/components/ui/SegmentedControl";
 import { langFromPathname } from "@/lib/content";
 import { t } from "@/lib/i18n";
 import { usePreferences } from "@/lib/local/preferences-store";
@@ -17,23 +18,12 @@ export default function ArabicSizeSetting() {
   const lang = langFromPathname(usePathname());
   const { values } = usePreferences();
   return (
-    <fieldset className="mx-4 mt-3 pb-3">
-      <legend className="text-sm text-muted mb-2">{t(lang, "arabicSizeLegend")}</legend>
-      <div className="flex flex-col gap-y-2">
-        {OPTIONS.map(([value, key]) => (
-          <label key={value} className="flex items-center gap-x-2 cursor-pointer">
-            <input
-              type="radio"
-              name="arabic-size"
-              value={value}
-              checked={values.arabic_font === value}
-              onChange={() => setting("arabic_font", value).catch(() => {})}
-              className="accent-primary"
-            />
-            <span>{t(lang, key)}</span>
-          </label>
-        ))}
-      </div>
-    </fieldset>
+    <SegmentedControl
+      legend={t(lang, "arabicSizeLegend")}
+      name="arabic-size"
+      value={values.arabic_font}
+      onChange={(value) => setting("arabic_font", value).catch(() => {})}
+      options={OPTIONS.map(([value, key]) => ({ value, label: t(lang, key) }))}
+    />
   );
 }

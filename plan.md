@@ -1,21 +1,21 @@
 # Plan: dua-rakaah
 
-_Last updated 2026-11-26 (phases 4a, 4b and 5 built; their reviews and live checks still open). This file covers only the work still ahead. Completed work (restructure into one
+_Last updated 2026-11-27 (phases 4a, 4b and 5 built and the interface redesigned; reviews and live checks still open). This file covers only the work still ahead. Completed work (restructure into one
 Next.js app, SQLite via `lib/db.js`, Next 16, Tailwind 4, ESLint flat config) is in git history, in commit `d1557b2`
 on branch `restructure/single-next-app`. Phase 1 (content pages) is the OpenSpec change `add-content-pages`, in
 `openspec/changes/archive/2026-11-25-add-content-pages/`._
 
 ## 1. Where the project stands
 
-A "Dua & Raka'ah" web app that shows Islamic supplications (duas) grouped by category. Its UI is
-modeled on duaruqyah.com.
+A "Dua & Raka'ah" web app that shows Islamic supplications (duas) grouped by category. Its UI follows the
+owner's style guide and reference page (OpenSpec change `redesign-app-ui`). It is no longer modeled on duaruqyah.com.
 
 ```
  dua-rakaah/  (one Next.js 16 app, React 19, Tailwind 4, Turbopack)
    app/                 routes and components
    lib/db.js            read-only SQLite helpers (better-sqlite3, server-only)
    data/dua_main.sqlite content database (read-only, ships with the app)
-   public/              icons and category images
+   public/              the app's mark, category images and the star pattern
 ```
 
 **Works today:**
@@ -29,7 +29,7 @@ modeled on duaruqyah.com.
 - Duas can be bookmarked (the icon on each card), and `/bookmark` lists them. Bookmarks work offline, sync to a shared
   database, and follow the reader after Google sign-in (phase 3).
 - Readers can delete their data at `/account`, and old removal records can be purged (phase 3).
-- Duas can be memorized (the third icon on each card: a "learned" checkbox and progress steps 0, 25, 50, 75, 100), and
+- Duas can be memorized (the control beside the bookmark on each card: a "learned" checkbox and progress steps 0, 25, 50, 75, 100), and
   `/memorize` lists what the reader has started. It works offline and syncs the same way as bookmarks (phase 3).
 - Dua parts with a matched Hisn al-Muslim recording can be played while online (phase 4a). **Not ready to launch:** the
   matches are not yet reviewed and the source's usage terms are unconfirmed.
@@ -39,17 +39,22 @@ modeled on duaruqyah.com.
   categories, a hadith and a donation card, readable offline (phase 5). **Not ready to launch:** the picked content,
   the town list and the new Bangla text are not yet reviewed.
 
+- One interface at every width from 320px (OpenSpec change `redesign-app-ui`): the style guide's colors and four
+  self-hosted typefaces, a shared component library, a navigation bar or header, Settings at every width, a prayer
+  band on the home page that follows the waqt, and not-found and error pages. **Not ready to launch:** the new Bangla
+  labels, the Bangla typeface and the footer's Arabic line are not yet reviewed (see "Redesign reviews" below).
+
 **Not done yet:**
 
 | Area | State |
 |---|---|
 | `/support` | Placeholder text only. The home page's donation card links to it (question 13). |
+| Redesign reviews | Open (task 7.7 of the archived `redesign-app-ui`): a Bangla speaker reviews the new Bangla labels (navigation, Settings, page intros, footer, 404 and error pages) and the Bangla typeface, Noto Sans Bengali, on a real phone; the Hafez reviews the footer's Arabic line, رَبِّ زِدْنِي عِلْمًا (Ta-Ha 20:114), and its English and Bangla meanings (`app/components/SiteFooter.js`, `footerArabicMeaning` in `lib/i18n.js`). Record their decisions here. |
 | Home page reviews | Open: the Hafez reviews `data/home-picks.json`; a Bangla speaker reviews the new labels and town names. See phase 5. |
-| LeftBar items (`/alldua`, `/rakaah`, `/dua-info`, `/books`) | These routes don't exist. `/rakaah` is planned as phase 6 (salah). The others stay as placeholders. `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account` and `/bn/account` exist. |
-| `Search` and the category search input | Markup only. Search was left out of phase 1 (item 7 of the old roadmap). |
-| `DuaIcons` copy, plan, share, report | Links with `href=""` and no behavior. The bookmark icon works (phase 3). |
-| `RightBar` settings | The language buttons, appearance, Arabic text size and reciter work. The rest is static. |
-| LeftBar and Topbar text | Not translated. Only the content pages and the category list switch language. |
+| Pages behind the old sidebar (`/alldua`, `/dua-info`, `/books`) | Don't exist. Their links were removed, not kept as placeholders. `/rakaah` is planned as phase 6 (salah), which adds its navigation entry. |
+| Search | Not built. The search box and the category filter were removed until it is. The `searchCategories` label is kept in `lib/i18n.js`. |
+| Copy, share and report on dua cards | Not built. Their icons were removed until they work. |
+| General and font settings entries, profile menu items | Removed: they did nothing. |
 | Bangla UI labels | Written by the assistant (`lib/i18n.js`). A Bangla speaker should review them. |
 | Audio | Built (4a, 4b). Open: Quran Foundation production access, the checks on production, the review of the matches, and the launch conditions. See phase 4. |
 
@@ -96,7 +101,7 @@ modeled on duaruqyah.com.
 | Category URL | `/duas/<slug>?cat=N`. `cat` decides the page. The slug is cosmetic: a wrong slug redirects (308) to the canonical URL, and an unknown category returns 404. |
 | `/duas` | A category grid. |
 | Language | **English is the default.** Bangla is the alternative. It comes from the URL only: `/duas/...` for English and `/bn/duas/...` for Bangla. |
-| Sidebar | Books, dua-info and alldua stay as **placeholders**. Bookmark and memorize become real features. Raka'ah becomes the salah page (phase 6). |
+| Navigation | Only working destinations are listed: Home, Duas, Saved, Memorize and Settings. Raka'ah joins it with the salah page (phase 6). Pages that don't exist are not linked. |
 | Home page | **Cards:** location and time, today's Hijri date, prayer times with the current waqt, a countdown circle, duas, categories, a hadith, donation (phase 5). Prayer times are **computed on the device** (adhan); the location never leaves it. |
 | Raka'ah content | **Our own guide, reviewed by a scholar, shipped with the app.** No API supplies one (checked 2026-11-26). APIs only add audio, words and evidence. |
 | User data | **Turso** (hosted SQLite) for bookmarks, memorize, preferences, and any future data the app writes. It stays separate from the content DB. |
@@ -124,8 +129,7 @@ decisions, including D12: there is no `loading.js` above the category pages, bec
 status 200 and hide the real 404 and 308 responses.
 
 Left over from the old phase 1 list:
-- **Search** (optional): add `app/api/search/route.js` with prepared `LIKE` queries, used by `Search` and the category filter.
-- **Translate the global chrome** (LeftBar, Topbar) if it's wanted.
+- **Search** (optional): add `app/api/search/route.js` with prepared `LIKE` queries, and a search box and category filter that use it.
 - **Bangla label review** by a Bangla speaker.
 
 ### Phase 2: Offline content (PWA) (done)
@@ -188,8 +192,8 @@ Memorize is implemented by the OpenSpec change `add-memorize` (read its `design.
   from sections 4.2 and 4.5: the column is `pref_key`, there is no `lang` setting (the language is the page's URL), and the
   account-wins rule at sign-in is a `fields.if_absent` change (set only if the account has no value) used for queued and
   re-sent setting changes, plus `mergeAnon` on the server. Dark theme and text size are applied by `PreferencesApplier`
-  and an inline script before first paint, using the `dua-prefs` copy in localStorage. The settings are on the right bar
-  (1536px and wider only); a `/settings` page for narrower screens is not built.
+  and an inline script before first paint, using the `dua-prefs` copy in localStorage. The settings are in a panel
+  that opens at every width (`redesign-app-ui` closed the gap on narrow screens).
 
 - **Purge and data deletion** (OpenSpec change `add-data-deletion`): `npm run db:user:purge` removes removed
   bookmarks and applied change IDs accepted more than 180 days ago, and a device that missed a purge is refreshed
@@ -228,7 +232,7 @@ Split into two changes, so that audio could start without Quran Foundation crede
 - `GET /api/audio/<dua>/<part>?reciter=<n>` and `GET /api/reciters`, server only, through `@quranjs/api`; answers kept
   in memory for one day; only `https` addresses on Quran Foundation's audio hosts.
 - The player plays a part's verses as one recording, tries Quran.com before Hisn al-Muslim, names the reciter, and
-  labels "Full verse recitation". "Audio / Reciter" is in the Settings panel; the default is recitation 7.
+  labels "Full verse recitation". The "Reciter" list is in the Settings panel; the default is recitation 7.
 - Without the four `QF_*` variables the app behaves as after 4a.
 - **Differences from sections 5.2 to 5.5:** the route includes the part number; verses are a `quran` field in
   `data/audio-sources.json` (version 2), not an `audio_sources` table; near matches to the Quran text are never accepted
@@ -298,7 +302,7 @@ automated fetching (403) on 2026-11-26.
 
 _Researched 2026-11-26. Not started. Proposed OpenSpec change: `add-rakaah`._
 
-The sidebar's Raka'ah button (`/rakaah`, icon `public/icons/rakaah.svg`) leads to a page about salah (Bangla: namaz):
+A Raka'ah navigation entry (`/rakaah`, to be added to `lib/nav.js` and `components/ui/icons.js`) leads to a page about salah (Bangla: namaz):
 how to pray it, step by step, with the words said in each position. English at `/rakaah`, Bangla at `/bn/rakaah`, the
 same URL rule as the dua pages.
 
@@ -337,7 +341,9 @@ and shipped with the app like the duas. The APIs fill in the words, audio and ev
    `npm run smoke`. No audio is saved, as in phase 2.
 5. **User data.** If steps are bookmarked or memorized, their IDs must not collide with `dua.id`: either give the steps
    their own record type in `lib/sync/records.js`, or IDs in a range no dua uses. Decide in the design.
-6. **Not in the first version:** Qibla (adhan's `Qibla()` can compute it on the device), illustrations, video,
+6. **Interface.** Use the shared components (`Steps` was built for the prayer positions), and decide how six entries
+   fit the bottom bar.
+7. **Not in the first version:** Qibla (adhan's `Qibla()` can compute it on the device), illustrations, video,
    women's or children's variants. Prayer times are on the home page (phase 5).
 
 **Decisions needed before the design:** see section 6, questions 9 to 12.

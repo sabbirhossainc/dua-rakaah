@@ -1,18 +1,42 @@
-import { Inter } from "next/font/google";
-import Topbar from "@/app/components/Topbar";
-import RightBar from "@/app/components/RightBar";
-import LeftBar from "@/app/components/LeftBar";
+import { Fraunces, Inter, Noto_Sans_Bengali, Scheherazade_New } from "next/font/google";
+import AccountWatcher from "@/app/components/AccountWatcher";
+import BottomNav from "@/app/components/BottomNav";
+import SettingsProvider from "@/app/components/SettingsProvider";
+import SiteFooter from "@/app/components/SiteFooter";
+import SiteHeader from "@/app/components/SiteHeader";
+import SkipLink from "@/app/components/SkipLink";
 import PwaProvider from "@/app/components/PwaProvider";
 import SyncStarter from "@/app/components/SyncStarter";
 import PreferencesApplier from "@/app/components/PreferencesApplier";
 import { inlineScriptText } from "@/lib/preferences";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
+// The typefaces (design D3). next/font serves them from the app's own origin, and the service worker saves them with
+// the other build files. globals.css chooses among them by the language of the text.
+const heading = Fraunces({
+  subsets: ["latin", "latin-ext"],
+  axes: ["opsz"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-heading",
 });
+const sans = Inter({
+  subsets: ["latin", "latin-ext"],
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-sans",
+});
+const bangla = Noto_Sans_Bengali({
+  subsets: ["bengali"],
+  display: "swap",
+  variable: "--font-bangla",
+});
+const arabic = Scheherazade_New({
+  subsets: ["arabic"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-arabic",
+});
+const FONT_VARIABLES = [heading, sans, bangla, arabic].map((font) => font.variable).join(" ");
 
 export const metadata = {
   title: {
@@ -26,38 +50,35 @@ export const metadata = {
   },
 };
 
+// The page may use the whole screen; the bottom bar adds the safe area below itself (design D5).
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+// The shell every page shares (design D6). The document scrolls: the header is sticky and the bottom bar fixed.
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={FONT_VARIABLES} suppressHydrationWarning>
       <head>
         {/* Applies the saved theme and Arabic size before the first paint (design D5). */}
         <script dangerouslySetInnerHTML={{ __html: inlineScriptText() }} />
       </head>
-      <body className="bg-page relative">
+      <body className="flex min-h-dvh flex-col">
         <PwaProvider>
           <SyncStarter />
           <PreferencesApplier />
-          <div
-            data-shell
-            className={`${inter.variable} z-0 lg:fixed lg:inset-x-0 xl:fixed xl:inset-x-0 xl:p-6 xl:pb-0 2xl:px-10 2xl:pt-6 2xl:fixed 2xl:inset-x-0`}
-          >
-            <div className="relative grid gap-6 sm:gap-0 xl:grid-rows-[46px_1fr] 2xl:grid-rows-[46px_1fr] z-0 xl:grid-cols-[105px_350px_1fr] 2xl:grid-cols-[105px_350px_1fr_270px]">
-              <div className="row-span-full hidden xl:block xl:z-[-1] 2xl:block 2xl:z-[-1]">
-                <LeftBar />
-              </div>
-              <div className="xl:col-start-2 xl:col-span-full 2xl:col-start-2 2xl:col-span-full 2xl:z-[-1]">
-                <Topbar />
-              </div>
-              {/* main part */}
-              <div className="md:z-[-3] lg:gap-6 lg:z-[-2] xl:gap-x-6 2xl:gap-x-6 2xl:z-[-1] grid sm:mx-auto md:mx-auto lg:w-[96%] lg:mx-auto mt-6 2xl:col-span-2">
-                {children}
-              </div>
-              <div className="hidden 2xl:block 2xl:col-start-4 z-[-2] my-6">
-                <RightBar />
-              </div>
-              <main className="hidden"></main>
-            </div>
-          </div>
+          <SettingsProvider>
+            <SkipLink />
+            <SiteHeader />
+            <main id="main" tabIndex={-1} className="flex-1 pb-section outline-none">
+              {children}
+            </main>
+            <SiteFooter />
+            <BottomNav />
+          </SettingsProvider>
+          <AccountWatcher />
         </PwaProvider>
       </body>
     </html>

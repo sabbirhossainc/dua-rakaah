@@ -45,6 +45,8 @@ const visibleText = (html) => decode(noScripts(html).replace(/<[^>]+>/g, " ")).r
 const titleOf = (html) => decode(/<title>([^<]*)<\/title>/.exec(html)?.[1] ?? "");
 const count = (s, needle) => s.split(needle).length - 1;
 
+const partsIn = (html) => count(html, 'data-dua-part="');
+
 function cardSlice(html, id) {
   const start = html.indexOf(`id="dua-${id}"`);
   if (start < 0) return "";
@@ -101,20 +103,21 @@ for (const lang of ["en", "bn"]) {
   const texts = cards.map((m) => visibleText(m[1]));
   check(`${p}: first and last card names`, texts[0]?.includes(categories[0][key]) && texts[9]?.includes(categories[9][key]), `${texts[0]} | ${texts[9]}`);
   categories.forEach((c, i) => {
-    check(`${p}: card ${c.cat_id} shows ${expectedDuas[c.cat_id]} duas`, texts[i]?.includes(` ${expectedDuas[c.cat_id]} `) || texts[i]?.includes(`${expectedDuas[c.cat_id]} `), texts[i]);
+    const wanted = lang === "bn" ? `${expectedDuas[c.cat_id]}টি দোয়া` : `${expectedDuas[c.cat_id]} duas`;
+    check(`${p}: card ${c.cat_id} shows ${expectedDuas[c.cat_id]} duas`, new RegExp(`(?<![0-9])${wanted}`).test(texts[i] ?? ""), texts[i]);
   });
-  check(`${p}: sidebar link to Toilet`, r.body.includes(`href="${lang === "bn" ? "/bn" : ""}/duas/toilet?cat=9"`));
+  check(`${p}: category list link to Toilet`, r.body.includes(`href="${lang === "bn" ? "/bn" : ""}/duas/toilet?cat=9"`));
   check(`${p}: slug for Dua's Importance and Adhaan & Iqamah`, r.body.includes("/duas/duas-importance?cat=1") && r.body.includes("/duas/adhaan-iqamah?cat=10"));
 }
 {
   const r = await get("/duas");
-  const sidebar = [...r.body.matchAll(/id="cat-(\d+)"/g)].map((m) => Number(m[1]));
-  check("/duas: sidebar lists categories 1..10", JSON.stringify(sidebar) === JSON.stringify(categories.map((c) => c.cat_id)));
+  const rowIds = [...r.body.matchAll(/id="cat-(\d+)"/g)].map((m) => Number(m[1]));
+  check("/duas: category list has categories 1..10", JSON.stringify(rowIds) === JSON.stringify(categories.map((c) => c.cat_id)));
   const cat5 = /href="\/duas\/morning-evening\?cat=5"[\s\S]*?<\/a>/g;
   const anchors = r.body.match(cat5) ?? [];
-  check("/duas: Morning & Evening shows 45 (not stored 53)", anchors.length === 2 && anchors.every((a) => a.includes(">45<")), `anchors ${anchors.length}`);
+  check("/duas: Morning & Evening shows 45 (not stored 53)", anchors.length === 2 && anchors.every((a) => /(?<![0-9])45 duas/.test(a) && !/53 duas/.test(a)), `anchors ${anchors.length}`);
   const dc = /href="\/duas\/duas-importance\?cat=1"[\s\S]*?<\/a>/.exec(r.body)?.[0] ?? "";
-  check("/duas: Dua's Importance shows 21", dc.includes(">21<"));
+  check("/duas: Dua's Importance shows 21", /(?<![0-9])21 duas/.test(dc));
 }
 
 // ---- every category page, both languages ----
@@ -196,7 +199,7 @@ for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/book
   const html = (await get(pathFor(morning, "en"))).body;
   const card = cardSlice(html, 123);
   check("dua 123: exactly one card", count(html, 'id="dua-123"') === 1);
-  check("dua 123: five parts", count(card, 'class="flex flex-col justify-start items-start"') === 5, `parts ${count(card, 'class="flex flex-col justify-start items-start"')}`);
+  check("dua 123: five parts", partsIn(card) === 5, `parts ${partsIn(card)}`);
   const arabic = db.prepare("SELECT dua_arabic a FROM dua WHERE id = 123 ORDER BY rowid").all().map((x) => x.a);
   const decodedCard = decode(card);
   const positions = [];
@@ -213,7 +216,7 @@ for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/book
   const arabic4 = db.prepare("SELECT dua_arabic a FROM dua WHERE id = 4").get().a;
   const en = await get("/duas/duas-importance?cat=1");
   const card = decode(cardSlice(en.body, 4));
-  check("dua 4: one part", count(cardSlice(en.body, 4), 'class="flex flex-col justify-start items-start"') === 1);
+  check("dua 4: one part", partsIn(cardSlice(en.body, 4)) === 1);
   const order = [arabic4, "Iyyaaka", "It is You we worship and It is You we ask for help.", "He whom Allah guides", "Surah Al-Fatihah 1:5"].map((s) => card.indexOf(s));
   check("dua 4: field order arabic, transliteration, translation, closing, reference", order.every((p, i) => p >= 0 && (i === 0 || p > order[i - 1])), order.join(","));
   check("dua 4: title shown", card.includes("Allah's guidance #1"));
@@ -226,7 +229,7 @@ for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/book
 {
   const html = (await get("/duas/time-of-dua?cat=3")).body;
   const card = decode(cardSlice(html, 40));
-  check("dua 40: two parts", count(cardSlice(html, 40), 'class="flex flex-col justify-start items-start"') === 2);
+  check("dua 40: two parts", partsIn(cardSlice(html, 40)) === 2);
   check("dua 40: reference keeps its line break", card.includes("Bukhari: 1145\n[2] Surah Az-Zariyat: 51: 17-18"));
   check("dua 40: line breaks are rendered (whitespace-pre-line)", cardSlice(html, 40).includes("whitespace-pre-line"));
 }
@@ -268,10 +271,18 @@ for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/book
     const order = [...html.matchAll(/data-home-card="([a-z]+)"/g)].map((m) => m[1]);
     check(`${path}: eight cards in order`, JSON.stringify(order) === JSON.stringify(cards), order.join(","));
     check(`${path}: names the place`, text.includes(place));
+    // The band: served with no period, holding the first four cards and none of the others.
+    const band = /<div[^>]*data-home-band[^>]*>/.exec(html);
+    check(`${path}: the prayer band is served neutral`, band?.[0].includes('data-waqt="neutral"'), band?.[0]);
+    const inBand = band ? html.slice(band.index, html.indexOf('data-home-card="duas"')) : "";
+    const held = [...inBand.matchAll(/data-home-card="([a-z]+)"/g)].map((m) => m[1]);
+    check(`${path}: the band holds the first four cards`, JSON.stringify(held) === JSON.stringify(cards.slice(0, 4)), held.join(","));
     const links = [...html.matchAll(/<a[^>]*data-category-card[^>]*>/g)].map((m) => decode(/href="([^"]+)"/.exec(m[0])?.[1] ?? ""));
     check(`${path}: category links`, JSON.stringify(links) === JSON.stringify(categories.map((c) => pathFor(c, lang))), links.join(" "));
     check(`${path}: donation link to /support`, /data-home-card="donation"[\s\S]*?href="\/support"/.test(html));
-    check(`${path}: no prayer time values`, !/<time\b/.test(html) && !timeValue.test(text), timeValue.exec(text)?.[0]);
+    // Without the footer: its verse reference looks like a time.
+    const content = visibleText(r.body.replace(/<footer[\s\S]*?<\/footer>/, ""));
+    check(`${path}: no prayer time values`, !/<time\b/.test(html) && !timeValue.test(content), timeValue.exec(content)?.[0]);
     check(`${path}: no Hijri date`, !/ AH\b|হিজরি [0-9\u09E6-\u09EF]|[0-9\u09E6-\u09EF]{4} হিজরি/.test(visibleText(html.split('data-home-card="duas"')[0])));
     const duaIds = [...html.matchAll(/data-home-dua="(\d+)"/g)].map((m) => Number(m[1]));
     check(`${path}: every listed dua`, JSON.stringify([...duaIds].sort()) === JSON.stringify([...picks.duas].sort()), duaIds.join(","));
@@ -371,7 +382,62 @@ for (const [path, lang, heading, action] of [
   check(`${path}: noindex`, /name="robots" content="noindex/.test(res.body));
   check(`${path}: heading, action and language`, res.body.includes(heading) && res.body.includes(action) && res.body.includes(`lang="${lang}"`));
 }
-check("/duas: the top bar links to the account page", (await get("/duas")).body.includes('href="/account"'));
+check("/duas: the page links to the account page", (await get("/duas")).body.includes('href="/account"'));
+
+// ---- the shared frame, on every page (app-navigation and site-shell specs) ----
+const FRAME_PAGES = [
+  "/", "/bn", "/duas", "/bn/duas", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize",
+  "/account", "/bn/account", "/no-such-page",
+  ...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]),
+];
+for (const p of FRAME_PAGES) {
+  const { body } = await get(p);
+  const html = noScripts(body);
+  const headings = (html.match(/<h1[\s>]/g) ?? []).length;
+  check(`${p}: exactly one h1`, headings === 1, `found ${headings}`);
+  check(`${p}: no empty or "#" link`, !/href="#?"/.test(html), /<a[^>]*href="#?"[^>]*>/.exec(html)?.[0]);
+  const dead = /href="[^"]*\/(?:rakaah|alldua|dua-info|books)(?:["/?#])/.exec(html);
+  check(`${p}: no link to a page that doesn't exist`, !dead, dead?.[0]);
+  check(`${p}: no "Duas Page"`, !body.includes("Duas Page"));
+  check(`${p}: skip link to the main content`, /<a[^>]*href="#main"/.test(html) && /<main[^>]*id="main"/.test(html));
+  check(`${p}: footer`, /<footer[\s>]/.test(html) && /<footer[\s\S]*href="\/support"[\s\S]*<\/footer>/.test(html));
+  check(`${p}: no third-party font address`, !/fonts\.(?:googleapis|gstatic)\.com/.test(body));
+}
+
+// The header's copy of the navigation. The bottom bar is built from the same function (lib/nav.js).
+const headerNav = (html) => /<header[\s\S]*?<nav[^>]*>([\s\S]*?)<\/nav>/.exec(noScripts(html))?.[1] ?? "";
+for (const [p, prefix, labels] of [
+  ["/", "", ["Home", "Duas", "Saved", "Memorize", "Settings"]],
+  ["/bn", "/bn", ["হোম", "দোয়া", "সংরক্ষিত", "মুখস্থ", "সেটিংস"]],
+]) {
+  const nav = headerNav((await get(p)).body);
+  const entries = [...nav.matchAll(/<(a|button)\b[^>]*>[\s\S]*?<\/\1>/g)].map((m) => m[0]);
+  const names = entries.map((e) => visibleText(e).trim());
+  const links = entries.map((e) => /href="([^"]*)"/.exec(e)?.[1] ?? null);
+  check(`${p}: the five navigation entries in order`, JSON.stringify(names) === JSON.stringify(labels), names.join(","));
+  const wanted = [prefix || "/", `${prefix}/duas`, `${prefix}/bookmark`, `${prefix}/memorize`, null];
+  check(`${p}: navigation links in the page's language`, JSON.stringify(links) === JSON.stringify(wanted), JSON.stringify(links));
+}
+for (const [p, href] of [[pathFor(sleep, "en"), "/duas"], [pathFor(sleep, "bn"), "/bn/duas"]]) {
+  const marked = (headerNav((await get(p)).body).match(/<a\b[^>]*aria-current="page"[^>]*>/g) ?? []);
+  check(`${p}: only Duas is marked current`, marked.length === 1 && marked[0].includes(`href="${href}"`), marked.join(" "));
+}
+
+// ---- the not-found page ----
+// /bn addresses reach it through a route that calls notFound(), and Next then leaves the drawing to the browser: the
+// response carries the page's content as data, so that is what is read here. The browser check covers the frame.
+for (const [p, text, home, duas] of [
+  ["/no-such-page", "This page doesn't exist", "/", "/duas"],
+  ["/bn/no-such-page", "এই পৃষ্ঠাটি নেই", "/bn", "/bn/duas"],
+]) {
+  const r = await get(p);
+  const main = /<main[^>]*>([\s\S]*)<\/main>/.exec(noScripts(r.body))?.[1] ?? "";
+  const data = decode(r.body).replaceAll('\\"', '"');
+  const has = (href) => main.includes(`href="${href}"`) || data.includes(`"href":"${href}"`);
+  check(`${p}: 404`, r.status === 404, `status ${r.status}`);
+  check(`${p}: says the page doesn't exist`, visibleText(main).includes(text) || data.includes(text));
+  check(`${p}: links to ${home} and ${duas}`, has(home) && has(duas));
+}
 
 // ---- offline support: the service worker file and the offline page ----
 {

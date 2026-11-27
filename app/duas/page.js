@@ -1,5 +1,5 @@
-import CategoryGrid from "@/app/components/content/CategoryGrid";
+import DuasPage from "@/app/components/content/DuasPage";
 
 export default function Duas() {
-  return <CategoryGrid lang="en" />;
+  return <DuasPage lang="en" />;
 }

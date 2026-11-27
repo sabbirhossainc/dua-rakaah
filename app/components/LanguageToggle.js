@@ -1,49 +1,30 @@
 "use client";
-
+// The language choice. It is not a setting: it takes the reader to the same page in the other language (design D7).
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { switchLanguageHref } from "@/lib/content";
+import SegmentedControl from "@/app/components/ui/SegmentedControl";
+import { langFromPathname, switchLanguageHref } from "@/lib/content";
+import { t } from "@/lib/i18n";
 
-const ACTIVE = "bg-primary text-white rounded-md w-29 h-10 sm:w-full";
-const INACTIVE = "text-ink border border-solid border-line rounded-md w-29 h-10 sm:w-full";
+// Each language is named in itself.
+const OPTIONS = [
+  { value: "en", label: "English", lang: "en" },
+  { value: "bn", label: "বাংলা", lang: "bn" },
+];
 
-// The two language buttons. Rendered without `onSelect` as the static fallback in RightBar.
-export function LanguageButtons({ active, onSelect }) {
-  return (
-    <div className="flex flex-row gap-x-3 mx-4 justify-center">
-      <button
-        type="button"
-        aria-pressed={active === "en"}
-        onClick={onSelect && (() => onSelect("en"))}
-        className={active === "en" ? ACTIVE : INACTIVE}
-      >
-        English
-      </button>
-      <button
-        type="button"
-        aria-pressed={active === "bn"}
-        onClick={onSelect && (() => onSelect("bn"))}
-        className={active === "bn" ? ACTIVE : INACTIVE}
-      >
-        বাংলা
-      </button>
-    </div>
-  );
-}
-
-// Takes the reader to the same page in the other language (design D7). The fragment is only
-// known in the browser, so it is read when a button is clicked.
+// useSearchParams needs a Suspense boundary on prerendered pages: SettingsPanel has it. The fragment is only known in
+// the browser, so it is read when a language is chosen.
 export default function LanguageToggle() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const active = /^\/bn(\/|$)/.test(pathname) ? "bn" : "en";
+  const active = langFromPathname(pathname);
 
   function select(target) {
     if (target === active) return;
-    router.push(
-      switchLanguageHref(pathname, searchParams.toString(), window.location.hash, target)
-    );
+    router.push(switchLanguageHref(pathname, searchParams.toString(), window.location.hash, target));
   }
 
-  return <LanguageButtons active={active} onSelect={select} />;
+  return (
+    <SegmentedControl legend={t(active, "languageLegend")} name="language" value={active} onChange={select} options={OPTIONS} />
+  );
 }

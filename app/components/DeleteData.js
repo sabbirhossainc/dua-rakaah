@@ -1,7 +1,9 @@
 "use client";
 // The "Delete my data" action with its confirmation (data-deletion spec). It needs a connection.
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import { signIn } from "next-auth/react";
+import Button from "@/app/components/ui/Button";
+import Sheet from "@/app/components/ui/Sheet";
 import { getDb } from "@/lib/local/db";
 import { getRunner } from "@/lib/local/client";
 import { completePendingSignOut, deleteMyData } from "@/lib/local/account";
@@ -23,12 +25,13 @@ function subscribeOnline(notify) {
 export default function DeleteData({ lang }) {
   const { ready } = useAccount();
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
-  const dialogRef = useRef(null);
+  const [confirming, setConfirming] = useState(false);
+  const warningId = useId();
   const [working, setWorking] = useState(false);
   const [outcome, setOutcome] = useState(null); // "deleted" | "signin" | "failed"
 
   async function confirm() {
-    dialogRef.current.close();
+    setConfirming(false);
     setWorking(true);
     setOutcome(null);
     try {
@@ -49,52 +52,49 @@ export default function DeleteData({ lang }) {
 
   return (
     <div className="flex flex-col items-start gap-4">
-      <button
-        type="button"
-        onClick={() => dialogRef.current.showModal()}
+      <Button
+        variant="danger"
+        onClick={() => setConfirming(true)}
         disabled={!ready || !online || working}
         aria-describedby={online ? undefined : "delete-offline"}
-        className="rounded-md bg-red-700 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {t(lang, "deleteData")}
-      </button>
+      </Button>
       {!online && (
-        <p id="delete-offline" className="text-sm text-muted">
+        <p id="delete-offline" className="text-label text-muted">
           {t(lang, "deleteDataOffline")}
         </p>
       )}
       {/* Always there, so that a screen reader announces what appears in it. */}
-      <p role="status">{working ? t(lang, "deleteDataWorking") : outcome && t(lang, MESSAGES[outcome])}</p>
+      <p role="status" className="text-ui">
+        {working ? t(lang, "deleteDataWorking") : outcome && t(lang, MESSAGES[outcome])}
+      </p>
       {outcome === "signin" && (
-        <button
-          type="button"
-          onClick={() => signIn("google").catch((error) => console.error("Could not start sign-in:", error))}
-          className="rounded-md border border-solid border-line px-4 py-2"
-        >
+        <Button variant="outline" onClick={() => signIn("google").catch((error) => console.error("Could not start sign-in:", error))}>
           {t(lang, "signIn")}
-        </button>
+        </Button>
       )}
-      {/* A modal <dialog>: the browser keeps the focus inside it, closes it on Escape and gives the focus back. */}
-      <dialog
-        ref={dialogRef}
-        aria-labelledby="delete-warning"
-        className="m-auto max-w-md rounded-lg bg-surface p-6 text-ink shadow-lg backdrop:bg-black/40"
+      <Sheet
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        title={t(lang, "deleteData")}
+        closeLabel={t(lang, "sheetClose")}
+        lang={lang}
+        role="alertdialog"
+        aria-describedby={warningId}
       >
-        <p id="delete-warning">{t(lang, "deleteDataWarning")}</p>
-        <div className="mt-5 flex flex-wrap justify-end gap-3">
-          <button
-            type="button"
-            autoFocus
-            onClick={() => dialogRef.current.close()}
-            className="rounded-md border border-solid border-line px-4 py-2"
-          >
+        <p id={warningId} className="text-reading">
+          {t(lang, "deleteDataWarning")}
+        </p>
+        <div className="flex flex-wrap justify-end gap-3">
+          <Button variant="outline" data-autofocus onClick={() => setConfirming(false)}>
             {t(lang, "cancel")}
-          </button>
-          <button type="button" onClick={confirm} className="rounded-md bg-red-700 px-4 py-2 text-white">
+          </Button>
+          <Button variant="danger" onClick={confirm}>
             {t(lang, "deleteDataConfirm")}
-          </button>
+          </Button>
         </div>
-      </dialog>
+      </Sheet>
     </div>
   );
 }

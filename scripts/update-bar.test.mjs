@@ -26,6 +26,8 @@ async function loadUpdateBar(t) {
     loader: { ".js": "jsx" },
     alias: { "@": ROOT },
     external: ["react", "react/jsx-runtime"],
+    // The bar's buttons import next/link, which is CommonJS and requires React.
+    banner: { js: 'import { createRequire as bundled } from "node:module"; const require = bundled(import.meta.url);' },
     logLevel: "silent",
   });
   t.after(() => fs.rmSync(outfile, { force: true }));

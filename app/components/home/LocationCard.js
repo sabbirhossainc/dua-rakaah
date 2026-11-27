@@ -1,7 +1,9 @@
 "use client";
 // The place the times are for, the clock, and the two ways to change the place (design D5, D6).
 import { useRef, useState } from "react";
-import HomeCard from "@/app/components/home/HomeCard";
+import BandSection from "@/app/components/home/BandSection";
+import Button from "@/app/components/ui/Button";
+import Select from "@/app/components/ui/Select";
 import { t } from "@/lib/i18n";
 import { formatClock } from "@/lib/prayer/dates";
 import { TOWNS } from "@/lib/prayer/place";
@@ -49,11 +51,11 @@ export default function LocationCard({ lang, now, place, onPlace }) {
 
   const name = place.town ? townName(place.town, lang) : null;
   return (
-    <HomeCard title={t(lang, "homePlaceTitle")} data-home-card="place">
-      <p className="text-2xl font-semibold" data-place-name>
+    <BandSection title={t(lang, "homePlaceTitle")} data-home-card="place" className="xl:order-1">
+      <p className="font-heading text-section" data-place-name>
         {place.kind === "device" ? t(lang, "locationMine") : name}
       </p>
-      <p className="mt-1 text-4xl tabular-nums">
+      <p className="text-title tabular-nums">
         {now === null ? (
           <>
             <span aria-hidden="true">--:--:--</span>
@@ -63,33 +65,31 @@ export default function LocationCard({ lang, now, place, onPlace }) {
           <time dateTime={new Date(now).toISOString()}>{formatClock(now, place.timeZone, lang)}</time>
         )}
       </p>
-      <div className="mt-4 flex flex-wrap items-end gap-3">
-        <button type="button" onClick={useMyLocation} className="home-button rounded-md px-4 py-2 text-sm">
+      <div className="band-panel mt-2 flex w-full max-w-sm flex-col items-center gap-3">
+        <Button icon="location" onClick={useMyLocation}>
           {t(lang, "locationUse")}
-        </button>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="home-subtle">{t(lang, "townLabel")}</span>
-          {/* No town is selected until one is picked, so picking Dhaka itself is a change too. */}
-          <select
-            value={place.kind === "town" ? place.town.id : ""}
-            onChange={(e) => pickTown(e.target.value)}
-            className="rounded-md border border-solid border-line bg-surface px-3 py-2 text-ink"
-          >
-            <option value="" disabled>
-              {t(lang, "townChoose")}
+        </Button>
+        {/* No town is selected until one is picked, so picking Dhaka itself is a change too. */}
+        <Select
+          label={t(lang, "townLabel")}
+          value={place.kind === "town" ? place.town.id : ""}
+          onChange={(e) => pickTown(e.target.value)}
+          className="w-full text-left"
+        >
+          <option value="" disabled>
+            {t(lang, "townChoose")}
+          </option>
+          {OPTIONS[lang].map((town) => (
+            <option key={town.id} value={town.id}>
+              {townName(town, lang)}
             </option>
-            {OPTIONS[lang].map((town) => (
-              <option key={town.id} value={town.id}>
-                {townName(town, lang)}
-              </option>
-            ))}
-          </select>
-        </label>
+          ))}
+        </Select>
       </div>
       {/* Always there, so that a screen reader announces what appears in it. */}
-      <p role="status" className="mt-3 text-sm empty:mt-0">
+      <p role="status" className="text-label">
         {status && t(lang, status)}
       </p>
-    </HomeCard>
+    </BandSection>
   );
 }

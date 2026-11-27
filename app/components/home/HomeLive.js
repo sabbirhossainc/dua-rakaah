@@ -1,12 +1,14 @@
 "use client";
-// The four cards that depend on the reader's time and place (design D2). One clock drives them all, and everything is
-// computed here: nothing about the place leaves the browser.
+// The prayer band: the four sections that depend on the reader's time and place (design D2, D9). One clock drives them
+// all, and everything is computed here: nothing about the place leaves the browser.
 import { useMemo, useState } from "react";
 import CountdownCard from "@/app/components/home/CountdownCard";
 import LocationCard from "@/app/components/home/LocationCard";
 import TimesCard from "@/app/components/home/TimesCard";
 import TodayCard from "@/app/components/home/TodayCard";
 import { deviceZone, useNow, useSavedHome } from "@/app/components/home/hooks";
+import Ornament from "@/app/components/ui/Ornament";
+import { bandPeriod } from "@/lib/prayer/band";
 import { dateInZone } from "@/lib/prayer/dates";
 import { readHome, resolvePlace, writeHome } from "@/lib/prayer/place";
 import { timesAround } from "@/lib/prayer/times";
@@ -38,11 +40,16 @@ export default function HomeLive({ lang }) {
   const waqt = times && now !== null ? waqtAt(times, now) : null;
 
   return (
-    <>
-      <LocationCard lang={lang} now={now} place={place} onPlace={(value) => change({ place: value })} />
-      <TodayCard lang={lang} date={date} offset={home.hijriOffset} onOffset={(hijriOffset) => change({ hijriOffset })} />
-      <TimesCard lang={lang} times={times && times.today} waqt={waqt} timeZone={place.timeZone} />
-      <CountdownCard lang={lang} times={times} waqt={waqt} />
-    </>
+    // The colors follow `data-waqt` (globals.css). "neutral" until the time and place are known.
+    <div data-home-band data-waqt={bandPeriod(waqt)} className="relative px-side py-heading md:rounded-band md:p-card">
+      <Ornament kind="lattice" />
+      {/* The order on screen is the order in the document up to 1280px; there the times take a row of their own. */}
+      <div className="relative grid grid-cols-1 items-start gap-x-cards gap-y-8 lg:grid-cols-2 xl:grid-cols-3">
+        <LocationCard lang={lang} now={now} place={place} onPlace={(value) => change({ place: value })} />
+        <TodayCard lang={lang} date={date} offset={home.hijriOffset} onOffset={(hijriOffset) => change({ hijriOffset })} />
+        <TimesCard lang={lang} times={times && times.today} waqt={waqt} timeZone={place.timeZone} />
+        <CountdownCard lang={lang} times={times} waqt={waqt} />
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 // The weekday, the Hijri date and the Gregorian date, with the one-day Hijri adjustment (design D7).
-import HomeCard from "@/app/components/home/HomeCard";
+import BandSection from "@/app/components/home/BandSection";
+import SegmentedControl from "@/app/components/ui/SegmentedControl";
 import { t } from "@/lib/i18n";
 import { formatGregorian, formatHijri, formatNumber, formatWeekday } from "@/lib/prayer/dates";
 import { HIJRI_OFFSETS } from "@/lib/prayer/place";
@@ -10,37 +11,28 @@ const offsetText = (n, lang) => `${n < 0 ? "−" : n > 0 ? "+" : ""}${formatNumb
 
 export default function TodayCard({ lang, date, offset, onOffset }) {
   return (
-    <HomeCard title={t(lang, "homeTodayTitle")} data-home-card="today">
+    <BandSection title={t(lang, "homeTodayTitle")} data-home-card="today" className="xl:order-2">
       {date === null ? (
-        <p className="home-subtle">{t(lang, "homeLoading")}</p>
+        <p className="text-reading">{t(lang, "homeLoading")}</p>
       ) : (
         <>
-          <p className="text-lg">{formatWeekday(date, lang)}</p>
-          <p className="mt-1 text-2xl font-semibold" data-hijri>
+          <p className="text-reading">{formatWeekday(date, lang)}</p>
+          <p className="font-heading text-section" data-hijri>
             {formatHijri(date, offset, lang)}
           </p>
-          <p className="home-subtle mt-1">{formatGregorian(date, lang)}</p>
+          <p className="text-ui">{formatGregorian(date, lang)}</p>
         </>
       )}
-      <fieldset className="mt-4" disabled={date === null}>
-        <legend className="home-subtle mb-2 text-sm">{t(lang, "hijriAdjust")}</legend>
-        <div className="flex gap-4">
-          {HIJRI_OFFSETS.map((n) => (
-            <label key={n} className="flex cursor-pointer items-center gap-x-2">
-              <input
-                type="radio"
-                name="hijri-offset"
-                value={n}
-                checked={offset === n}
-                onChange={() => onOffset(n)}
-                className="accent-primary"
-              />
-              <span aria-hidden="true">{offsetText(n, lang)}</span>
-              <span className="sr-only">{t(lang, OFFSET_LABELS[n])}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-    </HomeCard>
+      <div className="band-panel mt-2">
+        <SegmentedControl
+          legend={t(lang, "hijriAdjust")}
+          name="hijri-offset"
+          disabled={date === null}
+          value={offset}
+          onChange={onOffset}
+          options={HIJRI_OFFSETS.map((n) => ({ value: n, label: offsetText(n, lang), name: t(lang, OFFSET_LABELS[n]) }))}
+        />
+      </div>
+    </BandSection>
   );
 }

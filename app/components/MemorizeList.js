@@ -1,8 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo } from "react";
 import MemorizeButton, { memorizeStateLabel } from "@/app/components/MemorizeButton";
+import Button from "@/app/components/ui/Button";
+import EmptyState from "@/app/components/ui/EmptyState";
+import ListCard from "@/app/components/ui/ListCard";
+import SectionHeading from "@/app/components/ui/SectionHeading";
+import Tag from "@/app/components/ui/Tag";
+import { Icon } from "@/app/components/ui/icons";
 import { useMemorize } from "@/lib/local/memorize-store";
 import { resolveMemorize } from "@/lib/content-index";
 import { langPrefix } from "@/lib/content";
@@ -11,25 +16,30 @@ import { t } from "@/lib/i18n";
 function Group({ heading, entries, lang, records }) {
   if (entries.length === 0) return null;
   return (
-    <section className="mb-6">
-      <h2 className="mb-3 text-lg text-gray-600 dark:text-gray-300">{heading}</h2>
-      <ul className="flex flex-col gap-3">
-        {entries.map((entry) => (
-          <li key={entry.id} className="rounded-lg bg-surface p-5">
-            <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-3">
-              <Link href={entry.href} className="block min-w-0 flex-1 hover:opacity-80">
-                <span className="block font-medium text-primary">{entry.title}</span>
-                <span className="mt-1 block text-sm text-gray-400">
-                  {entry.category} · {memorizeStateLabel(lang, records.get(entry.id))}
-                </span>
-                <span className="mt-2 block h-1.5 rounded bg-icon-bg" aria-hidden="true">
-                  <span className="block h-1.5 rounded bg-primary" style={{ width: `${entry.progress}%` }} />
-                </span>
-              </Link>
-              <MemorizeButton duaId={entry.id} lang={lang} />
-            </div>
-          </li>
-        ))}
+    <section>
+      <SectionHeading title={heading} />
+      <ul className="flex flex-col gap-cards">
+        {entries.map((entry) => {
+          const record = records.get(entry.id);
+          const learned = record?.learned === 1;
+          return (
+            <li key={entry.id}>
+              <ListCard
+                href={entry.href}
+                icon={<Icon name="memorize" />}
+                title={entry.title}
+                meta={`${entry.category} · ${memorizeStateLabel(lang, record)}`}
+                // The words are in the line under the title; the tag is the same at a glance.
+                trailing={
+                  <Tag variant={learned ? "gold" : "tint"} aria-hidden="true">
+                    {learned ? <Icon name="check" size={16} /> : `${entry.progress}%`}
+                  </Tag>
+                }
+                action={<MemorizeButton duaId={entry.id} lang={lang} showState={false} className="mr-2" />}
+              />
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -46,17 +56,16 @@ export default function MemorizeList({ lang, index }) {
 
   if (inProgress.length === 0 && learned.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-lg bg-surface p-6">
-        <p>{t(lang, "memorizeEmpty")}</p>
-        <Link href={`${langPrefix(lang)}/duas`} className="text-primary underline">
-          {t(lang, "memorizeEmptyLink")}
-        </Link>
-      </div>
+      <EmptyState
+        icon="memorize"
+        title={t(lang, "memorizeEmpty")}
+        actions={<Button href={`${langPrefix(lang)}/duas`}>{t(lang, "browseDuas")}</Button>}
+      />
     );
   }
 
   return (
-    <div className="pb-8">
+    <div className="flex flex-col gap-section">
       <Group heading={t(lang, "memorizeInProgress")} entries={inProgress} lang={lang} records={byId} />
       <Group heading={t(lang, "memorizeLearnedHeading")} entries={learned} lang={lang} records={byId} />
     </div>

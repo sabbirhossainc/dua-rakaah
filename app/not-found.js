@@ -1,6 +1,6 @@
+import NotFoundPage from "@/app/components/NotFoundPage";
 
-export default function NotFound (){
-  return (
-    <div className="justify-center flex items-center text-3xl text-red-500">The Requested resource not found..!!!</div>
-  )
+// Every address with no page, outside /bn (which has its own).
+export default function NotFound() {
+  return <NotFoundPage lang="en" />;
 }

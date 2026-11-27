@@ -1,22 +1,19 @@
-import { pick } from "@/lib/content";
+// A subcategory heading followed by its duas.
 import DuaCard from "@/app/components/content/DuaCard";
+import SectionHeading from "@/app/components/ui/SectionHeading";
+import { pick } from "@/lib/content";
 
-// A subcategory heading followed by its duas. Replaces the old hard-coded "Section: Sections" bar.
-export default function SubcategorySection({ subcat, duas, lang }) {
+export default function SubcategorySection({ subcat, duas, category, lang }) {
   if (duas.length === 0) return null;
   const name = pick(subcat, "subcat_name", lang);
   return (
-    <section id={`subcat-${subcat.subcat_id}`} className="scroll-mt-4">
-      {name && (
-        <div className="flex mb-5 flex-row bg-surface rounded-lg px-5 py-4 justify-start items-center">
-          <h2 className="text-primary font-medium leading-[25px] subpixel-antialiased">
-            {name}
-          </h2>
-        </div>
-      )}
-      {duas.map((dua) => (
-        <DuaCard key={dua.id} dua={dua} lang={lang} />
-      ))}
+    <section id={`subcat-${subcat.subcat_id}`}>
+      {name && <SectionHeading title={name} />}
+      <div className="flex flex-col gap-cards">
+        {duas.map((dua) => (
+          <DuaCard key={dua.id} dua={dua} category={category} lang={lang} />
+        ))}
+      </div>
     </section>
   );
 }

@@ -1,7 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo } from "react";
+import Button from "@/app/components/ui/Button";
+import EmptyState from "@/app/components/ui/EmptyState";
+import ListCard from "@/app/components/ui/ListCard";
+import Tag from "@/app/components/ui/Tag";
+import { Icon } from "@/app/components/ui/icons";
 import { useBookmarks } from "@/lib/local/bookmark-store";
 import { resolveBookmarks } from "@/lib/content-index";
 import { langPrefix } from "@/lib/content";
@@ -18,26 +22,29 @@ export default function BookmarkList({ lang, index }) {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-lg bg-surface p-6">
-        <p>{t(lang, "bookmarksEmpty")}</p>
-        <Link href={`${langPrefix(lang)}/duas`} className="text-primary underline">
-          {t(lang, "bookmarksEmptyLink")}
-        </Link>
-      </div>
+      <EmptyState
+        icon="saved"
+        title={t(lang, "bookmarksEmpty")}
+        actions={<Button href={`${langPrefix(lang)}/duas`}>{t(lang, "browseDuas")}</Button>}
+      />
     );
   }
 
   return (
-    <ul className="flex flex-col gap-3 pb-8">
+    <ul className="flex flex-col gap-cards">
       {items.map((item) => (
         <li key={item.id}>
-          <Link
+          <ListCard
             href={item.href}
-            className="block rounded-lg bg-surface p-5 hover:bg-icon-bg"
-          >
-            <span className="block font-medium text-primary">{item.title}</span>
-            <span className="mt-1 block text-sm text-gray-400">{item.category}</span>
-          </Link>
+            icon={<Icon name="duas" />}
+            title={item.title}
+            meta={item.category}
+            trailing={
+              <Tag variant="text" icon="bookmark">
+                <span className="sr-only sm:not-sr-only">{t(lang, "navSaved")}</span>
+              </Tag>
+            }
+          />
         </li>
       ))}
     </ul>

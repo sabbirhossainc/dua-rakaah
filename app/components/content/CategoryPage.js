@@ -16,7 +16,11 @@ import {
 import { withRecordings } from "@/lib/audio/lookup";
 import { quranConfigured } from "@/lib/quran/config";
 import audioSources from "@/data/audio-sources.json";
+import { CategoriesButton } from "@/app/components/content/CategoryDrawer";
 import SubcategorySection from "@/app/components/content/SubcategorySection";
+import PageIntro from "@/app/components/ui/PageIntro";
+import Section from "@/app/components/ui/Section";
+import { fmt } from "@/lib/i18n";
 
 function safeDecode(value) {
   try {
@@ -67,16 +71,23 @@ export default async function CategoryPage({ lang, params, searchParams }) {
     withRecordings(groupDuas(getDuasByCategory(category.cat_id), lang), audioSources, { quran: quranConfigured() })
   );
 
+  const name = pick(category, "cat_name", lang);
+  const shown = sections.filter((section) => section.duas.length > 0);
+  const duas = shown.reduce((sum, section) => sum + section.duas.length, 0);
+
   return (
-    <div className="w-full pb-8">
-      {sections.map(({ subcat, duas }) => (
-        <SubcategorySection
-          key={subcat.subcat_id}
-          subcat={subcat}
-          duas={duas}
-          lang={lang}
-        />
-      ))}
+    // The reading column: wide enough for about 72 characters of a translation.
+    <div className="mx-auto max-w-[760px] xl:mx-0">
+      <PageIntro
+        title={name}
+        lead={fmt(lang, shown.length === 1 ? "categoryLeadOne" : "categoryLead", { duas, sections: shown.length })}
+        action={<CategoriesButton lang={lang} />}
+      />
+      <Section containerClassName="flex flex-col gap-section">
+        {shown.map(({ subcat, duas: list }) => (
+          <SubcategorySection key={subcat.subcat_id} subcat={subcat} duas={list} category={name} lang={lang} />
+        ))}
+      </Section>
     </div>
   );
 }

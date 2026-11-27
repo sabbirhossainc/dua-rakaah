@@ -1,19 +1,19 @@
-import Category from "@/app/components/Category";
-
-// The category list on the left and the page content on the right, for one language.
+// The category list and the page content of the duas pages, for one language (design D5): side by side from 1280px.
 // `lang` marks the whole area so screen readers and fonts treat Bangla pages as Bangla.
+import { Suspense } from "react";
+import CategoryDrawer from "@/app/components/content/CategoryDrawer";
+import CategoryList from "@/app/components/content/CategoryList";
+import CurrentCategory from "@/app/components/content/CurrentCategory";
+
 export default function ContentFrame({ lang, children }) {
   return (
-    <div lang={lang} className="grid grid-cols-8">
-      <div className="fixed h-[85.5vh] z-0 lg:top-[134px] lg:w-[350px] xl:w-[350px] 2xl:w-[350px] overflow-hidden rounded-2xl sm:hidden md:block sm:h-screen lg:h-[74vh] bg-surface">
-        <Category lang={lang} />
-      </div>
-      <div
-        id="scrollDua"
-        className="w-full lg:overflow-y-auto lg:col-start-2 xl:w-full xl:col-start-3 xl:col-span-6 mx-5 xl:gap-8 col-start-3"
-      >
-        {children}
-      </div>
+    <div lang={lang} className="container-page xl:grid xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start xl:gap-cards">
+      <CategoryDrawer lang={lang} list={<CategoryList lang={lang} />}>
+        <div className="content-column min-w-0">{children}</div>
+      </CategoryDrawer>
+      <Suspense>
+        <CurrentCategory />
+      </Suspense>
     </div>
   );
 }
