@@ -41,7 +41,7 @@ export default function InfoPage({ page, lang }) {
                 </Link>
               </p>
             )}
-            {page === "about" && section.id === "sources" && (
+            {((page === "about" && section.id === "sources") || (page === "privacy" && section.id === "contact")) && (
               <p className="mt-3 text-reading">
                 <Link href={`${langPrefix(lang)}/general-feedbacks`} className="text-primary underline underline-offset-4">
                   {t(lang, "feedbackTitle")}

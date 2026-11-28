@@ -4,6 +4,23 @@ Four things must be settled before audio (phases 4a and 4b) goes live. They come
 
 Facts in this file come from the repo unless marked "not found". Where the repo is silent, a note says what to fill in.
 
+## Status on 2026-11-28
+
+Checked against the repo at commit `3f43e8b`. Steps done outside the repo (emails, the Developer Console, listening, iOS) leave no trace there, so they count as not done until the results log at the end says otherwise. The log is still empty.
+
+| Item | State | What is left |
+|---|---|---|
+| 1. Content Sync question to Quran Foundation | Not started | Send the email and wait for the answer. Blocks item 2. |
+| 2. Production access, listening, basmala | Not started (blocked by item 1, and by 4a for the request) | All of it |
+| 3a. Partial and near matches | Not started. `data/audio-review.json` holds only the 5 holds from 4b. | All 7 rows |
+| 3b. iOS Safari | Not started (needs production credentials and an HTTPS host) | All of it. Two notes were out of date after the redesign and are corrected below. |
+| 4a. Privacy Policy | **Partly done.** `/privacy-policy` and `/bn/privacy-policy` exist, are linked from the footer, saved for offline use and smoke-tested. The three wrong statements were fixed and the missing sections added on 2026-11-28. | The facts the repo doesn't have: hosting provider, operator, purge schedule. Then a check against "Developer obligations", and the legal and Bangla reviews (see 4a). |
+| 4a. Terms of Use | Not started | No page and no link |
+| 4b. Hisn al-Muslim terms, Hafez review, holds, coverage, schedules, offline check | Not started. Nothing schedules `audio:check` or `db:user:purge` (no cron, scheduled task or CI workflow). | All of it |
+| 4b. README housekeeping | **Done.** The merge-conflict markers are gone, and the settings design path points at the archive. | Nothing |
+| New: `npm run smoke` is out of date | Open | Since `7afe818` (Raka'ah navigation), 39 checks still call `/rakaah` a dead link (`scripts/smoke.mjs`, about line 420), and 4 still expect the old five-entry navigation. Update the script. Also, the script runs against port 3000 unless `BASE_URL` is set, so run it as `BASE_URL=http://localhost:3100 npm run smoke` after `npm start -- -p 3100`. |
+| New: About page claim | Open | The About page says the content "is reviewed by a Hafez before it is published", which is not true yet (see 4b). |
+
 Quick reference
 
 | What | Value |
@@ -218,8 +235,8 @@ Not yet done on any iPhone or iPad. The player (`lib/audio/player.js`, `app/comp
 - [ ] **No audio request before play.** In Safari's Web Inspector on a Mac connected to the device (or just watching data use), confirm no audio request occurs until play is pressed.
 - [ ] **Credit and label.** The credit reads "Recitation: Quran Foundation" and gains the reciter's name once the audio address is resolved; "Full verse recitation" appears when a part is only some of its verses.
 - [ ] **Offline.** Turn on airplane mode: the controls disappear on saved pages and come back online. (Also still open from 4a: with the network off, open a saved category page and confirm no audio control.)
-- [ ] **Layout at phone width.** The 4a task notes say the app's existing layout crushes the cards at phone widths, and the control was only checked by forcing a card's width. Look at the cards on the phone and note anything unusable (this may be an existing layout issue, not an audio issue).
-- [ ] **Reciter picker.** The Settings panel (with "Audio / Reciter") appears only at 1536px and wider, so it cannot be tested on a phone. To test a different reciter on iOS, choose it on a desktop signed in with the same Google account, then sign in on the phone: the setting syncs (`reciter_id`). Confirm that a non-default reciter plays on iOS.
+- [ ] **Layout at phone width.** The 4a task notes said the old layout crushed the cards at phone widths. The redesign (`redesign-app-ui`, 2026-11-27) lays the app out at every width from 320px, but the audio control has not been seen on a real phone since. Look at the cards and the control on the phone and note anything unusable.
+- [ ] **Reciter picker.** Since the redesign the Settings panel (with the reciter list, `app/components/ReciterSetting.js`) opens at every width, so choose a non-default reciter on the phone itself and confirm it plays. Also check that the choice syncs (`reciter_id`) to a desktop signed in with the same Google account.
 - [ ] Repeat on a second iOS version if you have one (note the versions tested).
 
 **If something fails:** the player and its tests are in `lib/audio/player.js` and `lib/audio/player.test.js`; the component is `app/components/DuaAudio.js`. Add a failing test first where the fake audio element can reproduce it.
@@ -236,11 +253,39 @@ Not yet done on any iPhone or iPad. The player (`lib/audio/player.js`, `app/comp
 
 **Why.** The Quran Foundation Developer Terms require "a publicly reachable Privacy Policy and Terms of Use for the Application" (Developer obligations), and the Privacy Policy "must, at a minimum, incorporate all principles and requirements" of whatever that section names (read it on the Terms page: not confirmed here). `plan.md` ("Before launch") also says to name `www.hisnmuslim.com` and Quran Foundation's audio hosts in the Privacy Policy, because they see the reader's address when they press play.
 
-**Current state.** No Privacy Policy or Terms of Use page exists. `app/components/MenuCom.js` has a "Privacy Policy" entry with `href: ""` (it links to `#`) and no "Terms of Use" entry. `app/support/page.js` is a placeholder. "Thanks & Credits", "About Us" and "Copyright Warning" entries are also placeholders.
+**Current state (checked 2026-11-28).** Commit `a1916dc` added a Privacy Policy, but there is still no Terms of Use.
+
+- **Done:** `/privacy-policy` and `/bn/privacy-policy` (`app/privacy-policy/page.js`, `app/bn/privacy-policy/page.js`, drawn by `app/components/content/InfoPage.js`). The text is `PRIVACY` in `lib/pages/info.js`, the date is `PRIVACY_UPDATED` (2026-11-28), and the Bangla is a draft. It is linked from the footer on every page (`app/components/SiteFooter.js`). `app/components/MenuCom.js` no longer exists, so the "linked from `MenuCom`" in `plan.md` ("Before launch") is out of date. It is listed in `FIXED_PAGE_URLS` (`lib/precache.js`), in `scripts/smoke.mjs` (which also checks that it names Resend and shows its date) and in the `README.md` page table. `/about` and `/general-feedbacks` were added at the same time, and `/support` now says support is paused.
+- **What it covers:** what stays on the device, signing in, the feedback form sent through Resend, and no tracking.
+- **Wrong, fix before publishing (in both languages):**
+  1. "The pages, images and audio you use offline are kept in the browser's offline cache." The service worker never saves audio (`isAudio` in `lib/sw-rules.js`), so remove "audio".
+  2. "When you sign in, ... your bookmarks, memorize progress and settings are copied to our server." They are copied to the server **without signing in too**, under a random anonymous ID that a signed `dua_anon` cookie binds to the browser at the first sync (`lib/sync/handler.js`; `plan.md` section 2, "Identity"). Signing in merges them into the account.
+  3. "Your ... settings ... are kept in your browser's local storage." Settings are kept in IndexedDB (Dexie) with the outbox, and only a copy of the theme and Arabic size goes in `localStorage["dua-prefs"]`. The saved place for prayer times is in local storage, which is correct.
+- **Missing.** The Quran Foundation terms and `plan.md` need these sections, and none of them are on the page yet:
+  - `www.hisnmuslim.com` and Quran Foundation's audio hosts, which see the reader's address when they press play.
+  - Google, Turso and the hosting provider.
+  - Both cookies: the page mentions only "a cookie keeps you signed in".
+  - Deletion markers, the 30 days after sign-out, and the purge schedule.
+  - The audio credits.
+  - Who runs the app and how to contact them outside the feedback form.
+
+  The full list is below. No other outside service was found in `app/` or `lib/`: prayer times are computed on the device and fonts are served by the app.
 
 - [ ] Read the full "Developer obligations" part of the Developer Terms and note what the Privacy Policy and Terms must contain.
 - [ ] Decide and write down the facts the repo does not have: operator name and contact email, hosting provider and where the server runs, applicable country or jurisdiction, effective date. Not found in the repo: fill in.
-- [ ] Draft the Privacy Policy so it covers what the repo shows (verify each point against the code or README before publishing):
+- [x] Fix the three wrong statements above in `PRIVACY` (`lib/pages/info.js`, English and Bangla). Done 2026-11-28: the device section no longer says audio is cached, and now says settings are in IndexedDB with a copy in local storage; "language" was dropped from the settings, because it comes from the URL and is not stored. The account section is now headed "What is copied to our server" and says the copy happens without signing in too, under a random ID tied to the browser by a cookie. The new Bangla text is a draft for the Bangla reviewer.
+- [x] Add the missing points to `PRIVACY`. Done 2026-11-28, in English and a Bangla draft, each checked against the code.
+  - **New sections:** "Cookies", "Recitations", "Hosting", "How long we keep your data", and "Questions and changes", which links to General Feedback.
+  - **Account section:** now covers Google sign-in (only the account ID is kept, checked in `lib/auth-callbacks.js`) and Turso.
+  - **Smoke test:** `scripts/smoke.mjs` now checks that the page names the audio hosts, Turso and `dua_anon`. On the two privacy pages, the no-Quran.com-content rule accepts the bare host names but still refuses full addresses and reciter names.
+- [ ] **Still to fill in on the Privacy Policy**, because the repo doesn't know these facts. The page stays general about them, and a comment at the top of `lib/pages/info.js` lists them:
+  - the hosting provider's name and what its logs keep (the page says only that the host "may record" addresses);
+  - who runs the app (operator name), and a contact address if the feedback form is not enough;
+  - how often `npm run db:user:purge` is run (the page says removals over 180 days old are deleted "when we clean it up");
+  - anything the "Developer obligations" section of the Quran Foundation terms requires that is still missing.
+
+  Change `PRIVACY_UPDATED` whenever the text changes.
+- The list below is what the new sections were written from. Keep it to re-check the page:
   - **On the reader's device:** bookmarks, memorize progress, settings (theme, Arabic text size, reciter) and an outbox of unsynced changes in IndexedDB (Dexie); a copy of theme and size in `localStorage["dua-prefs"]`; the saved offline copy of the pages (service worker).
   - **Cookies:** `dua_anon`, a signed, HTTP-only cookie binding the browser to its random anonymous ID; the Auth.js session cookie when signed in.
   - **On the server (Turso, a hosted SQLite):** records tied to an anonymous random ID, or to an account when the reader signs in with Google. The app stores only Google's account ID, no email, name or picture. After sign-out, unsynced changes are kept on the device for 30 days.
@@ -248,17 +293,25 @@ Not yet done on any iPhone or iPad. The player (`lib/audio/player.js`, `app/comp
   - **Third parties:** Google (sign-in), Turso (data hosting), your hosting provider, `www.hisnmuslim.com` and Quran Foundation's audio hosts (`verses.quran.com`, `verses.quran.foundation`, `audio.qurancdn.com`, `quranicaudio.com` and `*.quranicaudio.com`), which see the reader's address when they press play. Quran Foundation's API is called from the server only, so confirm whether the reader's address is passed to it (the code does not appear to forward it; verify). No analytics or tracking code was found in `app/`, `lib/` or `package.json`; confirm your host does not add any, and describe any server logs it keeps.
   - **Quran Foundation requirements** from the Terms (credit, no rehosting, 1 week limit), and the credit for the Hisn al-Muslim recordings.
   - A contact route and how to ask a question or request deletion.
-- [ ] Draft the Terms of Use: acceptable use, no warranty on content and on audio accuracy, source credits (Hisn al-Muslim, Quran Foundation and the reciter), copyright of the dua content, link to the Privacy Policy, how changes are announced, and the governing law. Not found in the repo: where the dua texts in `data/dua_main.sqlite` come from and their license (the UI is "modeled on duaruqyah.com", `plan.md`), so state the real source and permission. Resolve this before publishing.
-- [ ] Have the two drafts read by someone qualified (a lawyer, or at least the app's owner), and by a Bangla speaker for the `/bn` versions if you add them. The Bangla UI labels in `lib/i18n.js` were written by the assistant and still need a Bangla reviewer.
-- [ ] Add the pages, following the existing pattern (see `app/account/page.js` and `app/bn/account/page.js`): `app/privacy/page.js` and `app/terms/page.js` (and `app/bn/...` if you want Bangla). Keep them static so they can be saved offline.
-- [ ] Link them: in `app/components/MenuCom.js` set the Privacy Policy `href` and add a "Terms of Use" entry (the dropdown is the only place that has these links today; consider a footer link as well so they are reachable on every page).
-- [ ] Add the new URLs to `FIXED_PAGE_URLS` in `lib/precache.js` and to the page lists in `scripts/smoke.mjs` (the lists at about lines 156, 278 and 340) and `README.md` ("Offline use" list), so they are saved for offline use and checked.
+- [ ] Draft the Terms of Use: acceptable use, no warranty on content and on audio accuracy, source credits (Hisn al-Muslim, Quran Foundation and the reciter), copyright of the dua content, link to the Privacy Policy, how changes are announced, and the governing law. Not found in the repo: where the dua texts in `data/dua_main.sqlite` come from and their license, so state the real source and permission. The UI was once "modeled on duaruqyah.com"; `plan.md` now says it no longer is, but the texts' origin is still not recorded. Resolve this before publishing.
+- [ ] Have the two drafts read by someone qualified (a lawyer, or at least the app's owner), and by a Bangla speaker for the `/bn` versions. The Bangla UI labels in `lib/i18n.js` and the Bangla page text in `lib/pages/info.js` were written by the assistant and still need a Bangla reviewer.
+- [x] Privacy Policy page added in English and Bangla, static, saved for offline use (see "Current state").
+- [ ] Add the Terms of Use the same way as the Privacy Policy:
+  - a `TERMS` entry (with its own updated date) in `lib/pages/info.js`, drawn by `InfoPage`;
+  - `app/terms-of-use/page.js` and `app/bn/terms-of-use/page.js`, copied from `app/privacy-policy/page.js`;
+  - title and description labels in `lib/i18n.js`.
+- [x] Privacy Policy linked from the footer (`app/components/SiteFooter.js`).
+- [ ] Link the Terms of Use from the footer, next to the Privacy Policy entry in `SiteFooter.js`, and link it from the Privacy Policy text.
+- [ ] Add the Terms of Use URLs in the places that list the privacy page:
+  - `FIXED_PAGE_URLS` in `lib/precache.js` (and `lib/precache.test.js` if it lists the pages);
+  - the page lists in `scripts/smoke.mjs`: the fixed pages at about line 160, the list at about line 406, the footer links at about line 422, the expected precache pages at about line 475 and the info-page checks at about line 588;
+  - the page table in `README.md`.
 - [ ] `npm run lint`, `npm test`, `npm run build`, `npm run check:precache`, then `npm start -- -p 3100` and `npm run smoke`.
 - [ ] Deploy, open both URLs from a private browser window (publicly reachable, no sign-in), and put the URLs in the production access request email (item 2a).
 
-**Done when:** both pages are live at public URLs, linked from the menu, name the audio hosts and the data the app keeps, and the smoke and precache checks pass.
+**Done when:** both pages are live at public URLs, linked from the footer, name the audio hosts and the data the app keeps (with the three wrong statements fixed), and the smoke and precache checks pass.
 
-**Where to record:** `plan.md` ("Before launch": the first bullet, and "Not built" in phase 3 about the Privacy Policy page); the URLs in the results log below.
+**Where to record:** `plan.md`: in "Before launch", the first bullet (it still says "linked from `MenuCom`"); in phase 3, "Not built: ... the Privacy Policy page" (now built); in phase 5, the "Open before launch" bullet about the position, which the page now covers. Put the URLs in the results log below.
 
 ### 4b. Settle the open phase 4a items (Hisn al-Muslim audio)
 
@@ -273,7 +326,8 @@ These come from `plan.md` (phase 4a "Open", "Before launch", questions 7 and 8) 
 - [ ] **Scheduled link check.** `npm run audio:check` is not scheduled by anything. Schedule it weekly with cron or Windows Task Scheduler (examples in `README.md`, "Checking the recordings"), and decide who reads the failure.
 - [ ] **Scheduled purge.** Same for `npm run db:user:purge` (monthly is the README's example), and make the Privacy Policy match what you actually do.
 - [ ] **Decide the open plan questions:** is about 50% audio coverage enough for launch (question 7), and is recitation 7 (Mishari Rashid al-`Afasy) the wanted default reciter (question 5). Record the answers in `plan.md` section 6.
-- [ ] **Housekeeping found while writing this list:** `README.md` still contains git merge-conflict markers (`<<<<<<< HEAD` at line 1, `=======` at line 6 and `>>>>>>> restructure/single-next-app` at the end) with an old four-line snippet above the real text. Remove the old lines and the markers before launch. `README.md` also still points the settings design at `openspec/changes/add-preferences/design.md`, which is now under `openspec/changes/archive/2026-11-25-add-preferences/`.
+- [ ] **The About page's review claim.** `/about` and `/bn/about` (`ABOUT`, section `sources`, in `lib/pages/info.js`) say "The content is reviewed by a Hafez before it is published." That is not true yet: the Hafez review of the audio matches, of `data/home-picks.json` and of the 31 hadith quotes is still open (`plan.md`, phase 5 and "Redesign reviews"). Before launch, either finish those reviews or change the sentence to say what has actually been reviewed.
+- [x] **Housekeeping (done by 2026-11-28):** the merge-conflict markers are gone from `README.md`, and its settings design link points at `openspec/changes/archive/2026-11-25-add-preferences/design.md`.
 
 **Done when:** Hisn al-Muslim's terms are confirmed (or its audio is withdrawn), the Hafez has reviewed the matches and the held-back duas are decided, the review files are committed, the per-category numbers are in `plan.md`, and offline hiding was confirmed on a real browser.
 
@@ -289,8 +343,8 @@ Do not launch audio until all of these are ticked (they repeat the README's laun
 - [ ] Production access approved, and the production credentials and both URLs switched in together (item 2)
 - [ ] Every listed verse heard on production, basmala decisions made (item 2)
 - [ ] Partial and near matches decided, iOS Safari tested (item 3)
-- [ ] Privacy Policy and Terms of Use published and linked, naming the audio hosts (item 4a)
-- [ ] Hisn al-Muslim terms confirmed, Hafez review done (item 4b)
+- [ ] Privacy Policy corrected and completed, Terms of Use written, both published and linked, naming the audio hosts (item 4a; the Privacy Policy page exists but is not ready)
+- [ ] Hisn al-Muslim terms confirmed, Hafez review done, About page's review claim true or changed (item 4b)
 - [ ] `npm run lint`, `npm test`, `npm run build`, `npm run check:precache` and `npm run smoke` pass on the final build with production credentials
 - [ ] A rollback is ready (see the quick reference above)
 

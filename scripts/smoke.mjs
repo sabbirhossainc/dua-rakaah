@@ -76,6 +76,9 @@ const morning = catByName("Morning & Evening");
 // Nothing from the Quran Foundation belongs in a page: its audio hosts, the invented names of the test stand-in, and
 // well-known reciters.
 const QURAN_CONTENT = /verses\.quran\.(?:com|foundation)|quranicaudio\.com|qurancdn\.com|Alafasy|Invented Reciter|Reciter Seven/;
+// The Privacy Policy names the audio hosts in its text, as the Quran Foundation terms ask. There, only a full address
+// (what an API answer would hold) or a reciter's name counts as Quran.com content.
+const QURAN_ADDRESS = /https?:\/\/(?:[a-z0-9-]+\.)*(?:verses\.quran\.(?:com|foundation)|quranicaudio\.com|qurancdn\.com)|Alafasy|Invented Reciter|Reciter Seven/;
 
 // The recordings each category page may mention: those listed for a part whose stored Arabic is still the matched one.
 const listed = JSON.parse(fs.readFileSync(new URL("../data/audio-sources.json", import.meta.url), "utf8")).recordings;
@@ -160,7 +163,8 @@ for (const lang of ["en", "bn"]) {
 for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/general-feedbacks", "/bn/general-feedbacks"]) {
   const { body } = await get(p);
   check(`${p}: no <audio>, no ihadis.com, no recording URL`, !body.includes("<audio") && !body.includes("ihadis.com") && !body.includes(".mp3"));
-  check(`${p}: no Quran.com address or reciter name`, !QURAN_CONTENT.test(body), QURAN_CONTENT.exec(body)?.[0]);
+  const quran = p.endsWith("/privacy-policy") ? QURAN_ADDRESS : QURAN_CONTENT;
+  check(`${p}: no Quran.com address or reciter name`, !quran.test(body), quran.exec(body)?.[0]);
 }
 
 // ---- Quran.com routes: they follow whether the server has credentials, which the reciter list shows ----
@@ -594,6 +598,10 @@ for (const [path, lang, marker] of [
 {
   const privacy = (await get("/privacy-policy")).body;
   check("/privacy-policy: names Resend and shows when it was updated", privacy.includes("Resend") && privacy.includes("data-updated"));
+  check(
+    "/privacy-policy: names the audio hosts, Turso and both cookies",
+    ["www.hisnmuslim.com", "verses.quran.com", "verses.quran.foundation", "audio.qurancdn.com", "quranicaudio.com", "Turso", "dua_anon"].every((s) => privacy.includes(s)),
+  );
   const support = (await get("/support")).body;
   check("/support: the paused notice with a link home", support.includes("data-support-paused") && /href="\/"/.test(support));
   const send = (body) => fetch(`${BASE}/api/general-feedbacks`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
