@@ -9,13 +9,17 @@ per category that shows its duas grouped under subcategory headings.
 
 ### Requirement: Category grid at the duas landing page
 `/duas` SHALL show one card for each of the 10 categories, in `cat_id` order. Each card SHALL show the category
-icon, its name, its number of subcategories and its number of duas, and SHALL link to that category's page.
-The page SHALL NOT render any dua content.
+icon, its name and its number of duas, and SHALL link to that category's page. It SHALL NOT show the number or names of
+its subcategories. The page SHALL NOT render any dua content.
 
 #### Scenario: Landing page lists every category
 - **WHEN** a reader opens `/duas`
 - **THEN** the page shows 10 category cards, starting with "Dua's Importance" and ending with "Adhaan & Iqamah"
 - **AND** no dua card appears on the page
+
+#### Scenario: No subcategory text
+- **WHEN** a reader opens `/duas` or `/bn/duas`
+- **THEN** no category card mentions subcategories in either language
 
 #### Scenario: Grid card opens its category
 - **WHEN** a reader selects the "Sleep" card on `/duas`
@@ -34,10 +38,10 @@ share one `dua.id` count as one dua. The stored `category.no_of_dua` value SHALL
 - **THEN** the count shown is 21
 
 ### Requirement: Category list beside the content
-Every page under `/duas` SHALL offer the category list, in `cat_id` order, with the same icon, name and counts as
-the grid. Each entry SHALL link to that category's page in the current language. From 1280px the list SHALL be shown as
-a column beside the content. Below 1280px it SHALL open from a "Categories" button on the page, labelled in the page's
-language, and close again with the Escape key, a close button or a choice of category.
+Every page under `/duas` SHALL offer the category list, in `cat_id` order, with the same icon, name and dua count as
+the grid, and no subcategory count. Each entry SHALL link to that category's page in the current language. From 1280px
+the list SHALL be shown as a column beside the content. Below 1280px it SHALL open from a "Categories" button on the
+page, labelled in the page's language, and close again with the Escape key, a close button or a choice of category.
 
 #### Scenario: Sidebar links to a category
 - **WHEN** a reader selects "Toilet" in the category list on any `/duas` page
@@ -143,3 +147,27 @@ shown as current by more than color alone. On `/duas` and `/bn/duas` no entry SH
 - **GIVEN** the screen is 1280px wide or wider
 - **WHEN** a reader opens the page of the last category
 - **THEN** the category column is scrolled so that the current entry is visible
+
+### Requirement: Category grid columns
+The category grid, on `/`, `/bn`, `/duas` and `/bn/duas`, SHALL be one column below 640px and at least two columns
+from 640px.
+
+#### Scenario: Phone
+- **WHEN** a reader opens `/duas` 390px wide
+- **THEN** the 10 category cards are one under another, with no sideways scrolling
+
+#### Scenario: Small tablet
+- **WHEN** a reader opens `/duas` 700px wide
+- **THEN** the cards are in two columns
+
+### Requirement: Clothing category name and old address
+Category 7 SHALL be named "Clothing" in English, at `/duas/clothing?cat=7`. Addresses with the earlier slug `cloths`,
+with or without `cat=7`, SHALL redirect permanently to it, in both languages.
+
+#### Scenario: Old link with cat
+- **WHEN** a reader opens `/duas/cloths?cat=7`
+- **THEN** the response is a permanent redirect to `/duas/clothing?cat=7`
+
+#### Scenario: Old slug only
+- **WHEN** a reader opens `/bn/duas/cloths`
+- **THEN** the response is a permanent redirect to `/bn/duas/clothing?cat=7`

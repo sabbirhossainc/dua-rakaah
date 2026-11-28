@@ -1,16 +1,18 @@
 "use client";
 // The time left until the current period ends, over a ring that empties as it passes (design D9).
+import { useState } from "react";
 import BandSection from "@/app/components/home/BandSection";
 import { prayerName } from "@/app/components/home/prayer-names";
 import { fmt, t } from "@/lib/i18n";
 import { durationParts, formatDuration, formatNumber } from "@/lib/prayer/dates";
+import { periodStarted } from "@/lib/prayer/waqt";
 
 const RADIUS = 52;
 const LENGTH = 2 * Math.PI * RADIUS;
 
 const counted = (lang, n, one, many) => fmt(lang, n === 1 ? one : many, { n: formatNumber(n, lang) });
 
-/** What a screen reader hears, for example "Asr, 1 hour 12 minutes left". It changes once a minute. */
+/** What a screen reader hears, for example "1 hour 12 minutes left until Asr". It changes once a minute. */
 function sentence(waqt, lang) {
   const { hours, minutes } = durationParts(waqt.remainingMs);
   const time = [
@@ -19,15 +21,27 @@ function sentence(waqt, lang) {
   ]
     .filter(Boolean)
     .join(" ");
-  return waqt.current
-    ? fmt(lang, "countdownSentence", { name: prayerName(waqt.current, lang), time })
-    : fmt(lang, "countdownSentenceUntil", { name: prayerName(waqt.next, lang), time });
+  return fmt(lang, "countdownSentenceUntil", { name: prayerName(waqt.next, lang), time });
+}
+
+/** The words for a period that has just begun, or "". They stay until the next one, or until the place changes. */
+function useAnnouncement(lang, waqt, placeKey) {
+  const moment = waqt ? { place: placeKey, current: waqt.current } : null;
+  const [seen, setSeen] = useState({ moment: null, message: "" });
+  if (moment?.place === seen.moment?.place && moment?.current === seen.moment?.current) return seen.message;
+  const started = periodStarted(seen.moment, moment);
+  let message = "";
+  if (started === null) message = t(lang, "prayerNone");
+  else if (started) message = fmt(lang, "prayerStarted", { name: prayerName(started, lang) });
+  setSeen({ moment, message });
+  return message;
 }
 
 /** `times` is undefined before the scripts run, and null when they cannot be computed: then there is no countdown. */
-export default function CountdownCard({ lang, times, waqt }) {
+export default function CountdownCard({ lang, times, waqt, placeKey }) {
+  const announcement = useAnnouncement(lang, waqt, placeKey);
   return (
-    <BandSection title={t(lang, "homeCountdownTitle")} data-home-card="countdown" className="xl:order-3">
+    <BandSection title={t(lang, "homeCountdownTitle")} data-home-card="countdown" className="lg:order-3">
       {times === null ? (
         <p className="text-reading">{t(lang, "prayerUnavailable")}</p>
       ) : (
@@ -56,10 +70,12 @@ export default function CountdownCard({ lang, times, waqt }) {
           </div>
           {waqt ? (
             <>
-              <p className="font-heading text-countdown" data-time-left>
+              <p aria-hidden="true" className="text-countdown numeric whitespace-nowrap py-1 [&:lang(bn)]:font-semibold" data-time-left>
                 {formatDuration(waqt.remainingMs, lang)}
               </p>
-              <p className="text-ui">{fmt(lang, "countdownUntil", { name: prayerName(waqt.next, lang) })}</p>
+              <p aria-hidden="true" className="text-ui">
+                {fmt(lang, "countdownUntil", { name: prayerName(waqt.next, lang) })}
+              </p>
             </>
           ) : (
             <p className="text-ui">{t(lang, "homeLoading")}</p>
@@ -69,6 +85,9 @@ export default function CountdownCard({ lang, times, waqt }) {
           </p>
         </>
       )}
+      <p className="sr-only" aria-live="polite" data-period-announcement>
+        {announcement}
+      </p>
     </BandSection>
   );
 }

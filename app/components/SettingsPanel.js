@@ -1,6 +1,6 @@
 "use client";
-// The Settings panel's content (design D6): the language, appearance, Arabic size and reciter choices, then the links
-// to the reader's data and to the support page. It is mounted when Settings is first opened, so nothing in it (the
+// The Settings panel's content (design D6): the language, appearance, Arabic size and reciter choices, then the link
+// to the reader's data (support is paused: no link to it). It is mounted when Settings is first opened, so nothing in it (the
 // reciter list in particular) is fetched before that.
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
@@ -32,14 +32,6 @@ export default function SettingsPanel({ onNavigate }) {
           icon={<Icon name="data" />}
           title={t(lang, "accountLink")}
           current={pathname === account}
-          chevron
-          onClick={onNavigate}
-        />
-        <ListCard
-          href="/support"
-          icon={<Icon name="heart" />}
-          title={t(lang, "supportUs")}
-          current={pathname === "/support"}
           chevron
           onClick={onNavigate}
         />

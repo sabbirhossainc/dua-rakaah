@@ -33,12 +33,15 @@ lib/
   prayer/             prayer times, the current waqt, dates, and the reader's place (all computed in the browser)
   home/               the home page's daily duas and hadith
 data/dua_main.sqlite  the content database (10 categories, 23 subcategories, 176 duas)
-data/bd-districts.json   Bangladesh's 64 district towns with coordinates (from GeoNames)
+data/capitals.json       each country's capital and the capital for each time zone (generated: do not edit by hand)
+data/capitals-bn.json    Bangla capital names drafted or corrected by hand
+data/bd-districts.json   Bangladesh's 64 district towns with coordinates (from GeoNames), the source for their names
+public/places.json       names for a position: districts in Bangladesh, states elsewhere (generated: do not edit by hand)
 data/home-picks.json     the duas and hadith quotes picked by hand for the home page
 data/audio-sources.json  the Quran verses and recordings each dua part may play (generated: do not edit by hand)
 data/audio-review.json   a person's approvals and rejections of those matches
 public/               the app's mark (also the favicon), category images and the star pattern
-scripts/              smoke test, precache check, user-data setup and purge, database compaction, audio matching
+scripts/              smoke test, precache check, user-data setup and purge, database compaction, audio matching, place data
 openspec/             specs, designs and tasks for each change
 plan.md               roadmap for the work still ahead
 ```
@@ -68,6 +71,7 @@ Open http://localhost:3000.
 | `npm run db:user:init` | Creates the user-data tables in the database named by `TURSO_DATABASE_URL`. Safe to run again. Reads `.env.local`. |
 | `npm run db:user:purge` | Deletes removed bookmarks and applied change IDs that the server accepted more than 180 days ago. `npm run db:user:purge -- --dry-run` only reports the counts. Reads `.env.local`. |
 | `npm run db:vacuum` | Compacts `data/dua_main.sqlite`. It replaces the file only if the schema and every row stay identical. Stop the dev server first. |
+| `node scripts/build-places.mjs` | Downloads IANA tzdata and GeoNames data (about 200 MB, into `.places-cache/`) and writes `data/capitals.json` and `public/places.json`. `--cached` reuses the downloads. Names missing in Bangla go in `data/capitals-bn.json`. The build itself downloads none of this. |
 | `npm run audio:match` | Matches the dua texts with Quran verses and Hisn al-Muslim recordings, and writes `data/audio-sources.json` and a review report. `npm run audio:match -- --cached` reuses the last downloads. See "Audio". |
 | `npm run audio:check` | Checks that every listed recording still answers with audio, and with Quran Foundation credentials every listed verse. Exits with an error if one does not. Reads `.env.local`. See "Audio". |
 
@@ -75,13 +79,17 @@ Open http://localhost:3000.
 
 | URL | Page |
 |---|---|
-| `/`, `/bn` | The home page, in English and Bangla: prayer times and a countdown, the Hijri date, duas, categories, a hadith, donation |
+| `/`, `/bn` | The home page, in English and Bangla: prayer times and a countdown, the Hijri date (Umm al-Qura, no adjustment), duas, categories, a hadith that changes with each prayer |
 | `/duas` | Category grid |
 | `/duas/<slug>?cat=<id>` | One category, with its duas grouped by subcategory |
 | `/bn/duas`, `/bn/duas/<slug>?cat=<id>` | The same pages in Bangla |
 | `/bookmark`, `/bn/bookmark` | The reader's bookmarked duas (read from the browser, works offline) |
 | `/memorize`, `/bn/memorize` | The duas the reader has started memorizing, in progress and learned (read from the browser, works offline) |
 | `/account`, `/bn/account` | Sign-in state and "Delete my data" (deleting needs a connection), linked from the footer and the Settings panel |
+| `/about`, `/bn/about` | What the app is for, how prayer times and the daily hadith work, sources |
+| `/privacy-policy`, `/bn/privacy-policy` | What is kept on the device and the server, and how feedback is delivered |
+| `/general-feedbacks`, `/bn/general-feedbacks` | The feedback form, sent by email through Resend (sending needs a connection) |
+| `/support` | A notice that support is not being taken right now. Nothing links to it |
 
 - `cat` decides which category is shown. The slug is only for readability: a wrong slug, or no `cat`, redirects
   (308) to the canonical URL, and an unknown category returns 404.
@@ -103,8 +111,8 @@ The design is in `openspec/changes/archive/2026-11-27-redesign-app-ui/design.md`
 
   | Typeface | Used for |
   |---|---|
-  | [Fraunces](https://github.com/undercasetype/Fraunces) | Latin headings and the countdown |
-  | [Inter](https://github.com/rsms/inter) | Latin interface and body text |
+  | [Fraunces](https://github.com/undercasetype/Fraunces) | Latin headings |
+  | [Inter](https://github.com/rsms/inter) | Latin interface and body text, and the countdown |
   | [Noto Sans Bengali](https://github.com/notofonts/bengali) | Bangla |
   | [Scheherazade New](https://software.sil.org/scheherazade/) | Arabic dua text |
 
@@ -135,17 +143,28 @@ from 1024px. The designs are in `openspec/changes/archive/2026-11-26-add-home-pa
   so they work offline. They are a calculation: the card tells readers to check with their local mosque. Between
   sunrise and Dhuhr no waqt is current, and during Fajr the countdown runs to sunrise. Where a time cannot be
   computed (near the poles), the page says so and shows no countdown.
-- **Place.** Dhaka until the reader chooses a district town or presses "Use my location" (which needs HTTPS or
-  `localhost`). The browser is asked for the position only when that button is pressed. A picked town is shown in its
-  own time zone; the default and "My location" are shown in the device's.
+- **Place.** Opening `/` or `/bn` asks the browser for the position (this needs HTTPS or `localhost`); no other page
+  asks. If it is given, the times are for it, in the device's time zone, and it is used at once on later visits while a
+  fresh one is read. It is named on the device: by its district in Bangladesh, elsewhere by its state or province (its
+  country where there is none), in English on `/bn` where GeoNames has no Bangla name. The names come from
+  `public/places.json` (about 660 KB, 200 KB compressed), fetched only for a new position and never saved for offline
+  use; the last name found is kept with the position and shown until a new one is found, or "My location" if none. Without it the page shows the capital of the country of the device's time
+  zone, in the capital's time zone, and says why. The country is worked out on the device; a zone with no known capital
+  (such as `UTC`) gives Dhaka. There is no list of places and no location button: a reader who refused can allow
+  location in the browser's settings.
+- **Clock.** The clock and the prayer times use a 12-hour clock with AM or PM. The countdown is hours, minutes and
+  seconds.
 - **Hijri date.** The Umm al-Qura calendar, which the reader can move one day back or forward.
-- **Stored on the device only.** `localStorage["dua-home"]` holds the place (a town, or a position rounded to 3
-  decimals) and the Hijri adjustment. It is never sent to the server or synced, and "Delete my data" removes it.
-  The Privacy Policy must say this before launch.
-- **Duas and hadith.** `data/home-picks.json` lists them by `dua.id`. Which ones show changes with the date. A quote
-  with no text in a page's language is left out of that page. **The list still has to be reviewed** before launch.
-- **Town coordinates** are from [GeoNames](https://www.geonames.org/), used under
-  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The Bangla town names and labels still need review.
+- **Stored on the device only.** `localStorage["dua-home"]` holds the position (rounded to 3 decimals) with its last name, and the Hijri
+  adjustment. It is never sent to the server or synced, and "Delete my data" removes it. The Privacy Policy must say
+  this before launch.
+- **Duas and hadith.** `data/home-picks.json` lists them by `dua.id`. The duas are four lists, for the morning (Fajr
+  until Dhuhr), daytime (until Asr), evening (until Isha) and night; which ones of a list show changes with the date.
+  A quote with no text in a page's language is left out of that page. **The lists still have to be reviewed** before
+  launch.
+- **Capitals** come from [IANA tzdata](https://www.iana.org/time-zones) (public domain) and
+  [GeoNames](https://www.geonames.org/), used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The
+  Bangla capital names and labels still need review.
 
 ## Hosting
 
@@ -158,7 +177,7 @@ Static-only hosting (`output: 'export'`) will not work. A service worker needs H
 After one online visit, every page can be read with no network: the 20 category pages in both languages, `/duas`,
 `/bn/duas`, `/`, `/bn`, `/support`, `/bookmark`, `/bn/bookmark`, `/memorize`, `/bn/memorize`, `/account`, `/bn/account`, and the icons, images, scripts, styles and fonts they use. A service worker
 (Serwist, `app/sw.js`) saves them. Anything else shows `/offline`, a short page that links back to `/duas`. The home
-page's prayer times, countdown, Hijri date and town list work offline too. The font files are saved with the build
+page's prayer times, countdown, Hijri date and duas work offline too. The font files are saved with the build
 files (about 840 KB).
 
 - **Production builds only.** `npm run dev` never registers the worker, and removes one left on the same
@@ -361,12 +380,19 @@ Environment variables (server only: none may start with `NEXT_PUBLIC_`). Copy `.
 | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` | A Google OAuth client. Its redirect URL is `<origin>/api/auth/callback/google`. |
 | `ANON_COOKIE_SECRET` | Signs the anonymous-device cookie. A long random string, different from `AUTH_SECRET`. |
 | `AUTH_TRUST_HOST` | Set to `true` when the app runs behind a proxy that sets the host header. |
+| `RESEND_API_KEY` | The [Resend](https://resend.com) API key that sends feedback email. Without it, or without `FEEDBACK_TO_EMAIL`, `POST /api/general-feedbacks` answers `503`. |
+| `FEEDBACK_TO_EMAIL` | The team inbox feedback goes to. |
+| `FEEDBACK_FROM_EMAIL` | The sender, on a domain verified in Resend. Empty: Resend's test sender `onboarding@resend.dev`, which delivers only to the Resend account's own address. |
+
+Feedback is checked on the server (the same rules as the form), a filled hidden `website` field is treated as spam
+(answered `200`, not sent), and each network address may send 5 per 10 minutes. The limit is kept in memory, per server
+instance, and resets on restart.
 
 ### Deleting data
 
 A reader, signed in or not, can erase their data at `/account` after a confirmation. The server deletes the account,
 every anonymous device merged into it and all their records in one transaction; the device is cleared and starts
-again as a new anonymous device (the home page's saved place and Hijri adjustment are removed with the rest). The reader's other devices are answered `410` at their next sync, and clear
+again as a new anonymous device (the home page's saved place is removed with the rest). The reader's other devices are answered `410` at their next sync, and clear
 themselves. Signing in with the same Google account later starts a new, empty account, and changes a device had set
 aside at an offline sign-out before the deletion are not stored in it. The server keeps only deletion markers: the
 time, with a SHA-256 hash of the account ID or with a deleted anonymous owner's random ID. The design is in

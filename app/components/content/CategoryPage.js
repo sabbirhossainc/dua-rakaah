@@ -4,6 +4,7 @@ import {
   categorySlug,
   groupBySubcategory,
   groupDuas,
+  legacyCategoryId,
   parseCat,
   pick,
 } from "@/lib/content";
@@ -38,7 +39,8 @@ async function resolve(lang, params, searchParams) {
   const { cat } = await searchParams;
 
   if (cat === undefined) {
-    const bySlug = getCategoryBySlug(slug);
+    const oldId = legacyCategoryId(slug);
+    const bySlug = getCategoryBySlug(slug) ?? (oldId === null ? null : getCategory(oldId));
     return bySlug
       ? { status: "redirect", href: categoryHref(bySlug, lang) }
       : { status: "notFound" };

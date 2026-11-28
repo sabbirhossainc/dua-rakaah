@@ -27,6 +27,8 @@
   --color-body: #1e2b28;
   --color-muted: #56655f;
   --color-line: #e6dfd1;
+  /* Borders that must be seen (inputs, dua cards, badges): at least 3:1 on every surface. */
+  --color-edge: #7a8680;
   --color-primary: #0e3b33;
   --color-on-primary: #fbf8f2;
   --color-gold: #c9a34e;
@@ -148,12 +150,19 @@
   }
 }
 
-/* The time left. The display optical size follows from the font size. */
+/* The time left. Not in the heading typeface: Fraunces has no digits of one width. */
 @utility text-countdown {
-  font-size: 60px;
-  line-height: 1;
+  /* Shrinks in the one-third column from 1024px so "10:59:59" is never cut off (design D3). */
+  font-size: clamp(40px, 3.2vw + 16px, 60px);
+  line-height: 1.25;
   font-weight: 500;
+}
+
+/* Clocks and times: digits of one width, so nothing moves as they change, read left to right wherever they are. */
+@utility numeric {
   font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 /* Arabic dua text: the reader's size, with lines twice as tall so vowel marks don't collide. */
@@ -175,6 +184,7 @@
   --color-body: #e9e3d6;
   --color-muted: #b5c2bc;
   --color-line: #1f5248;
+  --color-edge: #6a9a8e;
   --color-primary: #c9a34e;
   --color-on-primary: #0a2b25;
   --color-gold: #c9a34e;
@@ -273,6 +283,7 @@ html {
   --color-gold-text: var(--color-gold);
   --color-focus: var(--color-gold);
   --color-line: color-mix(in srgb, var(--color-gold) 35%, transparent);
+  --color-edge: var(--color-gold);
   --color-tint: var(--color-on-gold);
   --color-surface: var(--color-tint);
   --color-sand: var(--color-tint);
@@ -309,9 +320,8 @@ html {
 .notice {
   position: fixed;
   z-index: 50;
-  right: var(--space-side);
+  inset-inline: var(--space-side);
   bottom: calc(var(--bottom-bar) + 12px);
-  left: var(--space-side);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -586,16 +596,6 @@ html:has(.sheet:modal) {
   background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
   color: var(--color-body);
   padding: 12px;
-}
-
-li.band-panel {
-  padding-block: 4px;
-}
-
-@media (min-width: 1280px) {
-  li.band-panel {
-    padding-block: 12px;
-  }
 }
 
 /* The lattice behind the home page: one tile used as a mask, so one file serves both themes. */

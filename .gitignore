@@ -40,3 +40,6 @@ next-env.d.ts
 
 # downloaded recording texts and the review report (npm run audio:match); never commit them
 /.audio-cache/
+
+# downloads of scripts/build-places.mjs
+/.places-cache/

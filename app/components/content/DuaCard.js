@@ -32,9 +32,11 @@ export default function DuaCard({ dua, category, lang }) {
     <Card
       as="article"
       id={`dua-${dua.id}`}
+      // A border and badge that stand out from the card and the page (design D12 of apply-audit-pages-and-feedback).
+      className="border-edge!"
       tag={
         <span className="flex w-full items-start justify-between gap-3">
-          <Tag>{category}</Tag>
+          <Tag variant="outline">{category}</Tag>
           <Ornament kind="star" />
         </span>
       }
@@ -46,7 +48,7 @@ export default function DuaCard({ dua, category, lang }) {
           <div data-dua-part>
             {part.top && <p className="mt-5 text-reading whitespace-pre-line">{part.top}</p>}
             {part.arabic && (
-              <p lang="ar" dir="rtl" className="mt-5 text-right text-arabic whitespace-pre-line text-ink">
+              <p lang="ar" dir="rtl" className="mt-5 text-start text-arabic whitespace-pre-line text-ink">
                 {part.arabic}
               </p>
             )}

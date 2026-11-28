@@ -3,6 +3,8 @@ import { Icon } from "@/app/components/ui/icons";
 
 const VARIANTS = {
   tint: "bg-tint text-primary px-3 py-1",
+  // A tint with a border that stands out on any card: for badges on dua cards.
+  outline: "bg-tint text-primary border border-edge px-3 py-1",
   gold: "bg-gold text-on-gold px-3 py-1",
   sand: "bg-sand text-ink px-3 py-1",
   // An icon and text, with no fill.

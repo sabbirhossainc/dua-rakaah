@@ -6,7 +6,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { categorySlug } from "../lib/content.js";
+import { categorySlug, langFromPathname } from "../lib/content.js";
 
 const require = createRequire(import.meta.url);
 const Database = require("better-sqlite3");
@@ -106,6 +106,7 @@ for (const lang of ["en", "bn"]) {
     const wanted = lang === "bn" ? `${expectedDuas[c.cat_id]}টি দোয়া` : `${expectedDuas[c.cat_id]} duas`;
     check(`${p}: card ${c.cat_id} shows ${expectedDuas[c.cat_id]} duas`, new RegExp(`(?<![0-9])${wanted}`).test(texts[i] ?? ""), texts[i]);
   });
+  check(`${p}: no subcategory text on the cards`, !texts.some((x) => /subcategor|সাবক্যাটাগরি/i.test(x)), texts.find((x) => /subcategor|সাবক্যাটাগরি/i.test(x)));
   check(`${p}: category list link to Toilet`, r.body.includes(`href="${lang === "bn" ? "/bn" : ""}/duas/toilet?cat=9"`));
   check(`${p}: slug for Dua's Importance and Adhaan & Iqamah`, r.body.includes("/duas/duas-importance?cat=1") && r.body.includes("/duas/adhaan-iqamah?cat=10"));
 }
@@ -156,7 +157,7 @@ for (const lang of ["en", "bn"]) {
 }
 
 // ---- the other saved pages have no audio either ----
-for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"]) {
+for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/general-feedbacks", "/bn/general-feedbacks"]) {
   const { body } = await get(p);
   check(`${p}: no <audio>, no ihadis.com, no recording URL`, !body.includes("<audio") && !body.includes("ihadis.com") && !body.includes(".mp3"));
   check(`${p}: no Quran.com address or reciter name`, !QURAN_CONTENT.test(body), QURAN_CONTENT.exec(body)?.[0]);
@@ -255,10 +256,11 @@ for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/book
 // ---- the home page: the same HTML for everyone, with nothing that depends on the reader's time or place ----
 {
   const picks = JSON.parse(fs.readFileSync(new URL("../data/home-picks.json", import.meta.url), "utf8"));
-  const cards = ["place", "today", "times", "countdown", "duas", "categories", "hadith", "donation"];
-  // Two digits, a colon and two digits, in Latin or Bangla digits: what a prayer time or the clock looks like.
-  const timeValue = /[0-9\u09E6-\u09EF]{2}:[0-9\u09E6-\u09EF]{2}/;
-  for (const [path, lang, place] of [["/", "en", "Dhaka"], ["/bn", "bn", "ঢাকা"]]) {
+  const cards = ["place", "today", "times", "countdown", "duas", "categories", "hadith"];
+  // A 12-hour time in Latin or Bangla digits: what a prayer time or the clock looks like.
+  const timeValue = /[0-9\u09E6-\u09EF]{1,2}:[0-9\u09E6-\u09EF]{2}(?::[0-9\u09E6-\u09EF]{2})?\s?[AP]M/i;
+  const listed = [...new Set(Object.values(picks.duas).flat())];
+  for (const [path, lang, places] of [["/", "en", ["Dhaka", "My location"]], ["/bn", "bn", ["ঢাকা", "আমার অবস্থান"]]]) {
     const r = await get(path);
     const html = noScripts(r.body);
     const text = visibleText(r.body);
@@ -269,8 +271,10 @@ for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/book
     else check(`${path}: a Bangla title with the suffix`, /^[\u0980-\u09FF ]+ \| /.test(titleOf(r.body)) && titleOf(r.body).endsWith(`| ${TITLE_SUFFIX}`), titleOf(r.body));
     check(`${path}: content area lang="${lang}"`, new RegExp(`<div[^>]*lang="${lang}"[^>]*data-home`).test(html));
     const order = [...html.matchAll(/data-home-card="([a-z]+)"/g)].map((m) => m[1]);
-    check(`${path}: eight cards in order`, JSON.stringify(order) === JSON.stringify(cards), order.join(","));
-    check(`${path}: names the place`, text.includes(place));
+    check(`${path}: seven cards in order`, JSON.stringify(order) === JSON.stringify(cards), order.join(","));
+    const placeCard = visibleText(html.slice(html.indexOf('data-home-card="place"'), html.indexOf('data-home-card="today"')));
+    check(`${path}: no place name served`, !places.some((p) => placeCard.includes(p)), placeCard);
+    check(`${path}: no place control`, !/<select\b|Use my location|আমার অবস্থান ব্যবহার করুন/.test(html));
     // The band: served with no period, holding the first four cards and none of the others.
     const band = /<div[^>]*data-home-band[^>]*>/.exec(html);
     check(`${path}: the prayer band is served neutral`, band?.[0].includes('data-waqt="neutral"'), band?.[0]);
@@ -279,14 +283,19 @@ for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/book
     check(`${path}: the band holds the first four cards`, JSON.stringify(held) === JSON.stringify(cards.slice(0, 4)), held.join(","));
     const links = [...html.matchAll(/<a[^>]*data-category-card[^>]*>/g)].map((m) => decode(/href="([^"]+)"/.exec(m[0])?.[1] ?? ""));
     check(`${path}: category links`, JSON.stringify(links) === JSON.stringify(categories.map((c) => pathFor(c, lang))), links.join(" "));
-    check(`${path}: donation link to /support`, /data-home-card="donation"[\s\S]*?href="\/support"/.test(html));
+    check(`${path}: no donation card and no link to /support`, !html.includes('data-home-card="donation"') && !html.includes('href="/support"'));
+    check(`${path}: no Hijri adjustment control`, !/name="hijri-offset"/.test(html));
+    check(`${path}: the prayer band is the Prayer times target`, /<div[^>]*id="prayer-times"[^>]*data-home-band/.test(html));
     // Without the footer: its verse reference looks like a time.
     const content = visibleText(r.body.replace(/<footer[\s\S]*?<\/footer>/, ""));
     check(`${path}: no prayer time values`, !/<time\b/.test(html) && !timeValue.test(content), timeValue.exec(content)?.[0]);
     check(`${path}: no Hijri date`, !/ AH\b|হিজরি [0-9\u09E6-\u09EF]|[0-9\u09E6-\u09EF]{4} হিজরি/.test(visibleText(html.split('data-home-card="duas"')[0])));
     const duaIds = [...html.matchAll(/data-home-dua="(\d+)"/g)].map((m) => Number(m[1]));
-    check(`${path}: every listed dua`, JSON.stringify([...duaIds].sort()) === JSON.stringify([...picks.duas].sort()), duaIds.join(","));
-    for (const id of picks.duas) {
+    check(`${path}: four dua lists`, Object.keys(picks.duas).join() === "morning,day,evening,night");
+    check(`${path}: every listed dua once`, JSON.stringify([...duaIds].sort()) === JSON.stringify([...listed].sort()), duaIds.join(","));
+    const visible = [...html.matchAll(/<li(?![^>]*\shidden)[^>]*data-home-dua="(\d+)"/g)].map((m) => Number(m[1]));
+    check(`${path}: the first daytime duas are shown`, JSON.stringify(visible) === JSON.stringify(picks.duas.day.slice(0, 3)), visible.join(","));
+    for (const id of listed) {
       const row = db.prepare("SELECT cat_id FROM dua WHERE id = ?").get(id);
       const c = categories.find((x) => x.cat_id === row.cat_id);
       check(`${path}: dua ${id} links to its card`, decode(html).includes(`href="${pathFor(c, lang)}#dua-${id}"`));
@@ -297,6 +306,9 @@ for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/book
     check(`${path}: every quote in this language (${quotes.length})`, count(html, "data-home-quote=") === quotes.length, `found ${count(html, "data-home-quote=")}`);
     check(`${path}: all duas link`, html.includes(`href="${prefix}/duas"`));
   }
+  const places = await fetch(BASE + "/places.json");
+  const placesTable = await places.json().catch(() => null);
+  check("the places table is served by the app", places.status === 200 && placesTable?.points?.length > 0, `status ${places.status}`);
   const pattern = await fetch(BASE + "/images/home-pattern.svg");
   check("the home pattern is served by the app", pattern.status === 200 && /svg/.test(pattern.headers.get("content-type") ?? ""), `status ${pattern.status}`);
   const sheets = [...(await get("/")).body.matchAll(/href="(\/_next\/static\/[^"]+\.css)[^"]*"/g)].map((m) => m[1]);
@@ -315,6 +327,10 @@ const redirects = [
   ["/bn/duas/sleep?cat=5", "/bn/duas/morning-evening?cat=5"],
   ["/bn/duas/sleep", "/bn/duas/sleep?cat=6"],
   ["/bn/duas/morning-&-evening?cat=5", "/bn/duas/morning-evening?cat=5"],
+  ["/duas/cloths?cat=7", "/duas/clothing?cat=7"],
+  ["/duas/cloths", "/duas/clothing?cat=7"],
+  ["/bn/duas/cloths?cat=7", "/bn/duas/clothing?cat=7"],
+  ["/bn/duas/cloths", "/bn/duas/clothing?cat=7"],
 ];
 for (const [from, to] of redirects) {
   const r = await get(from);
@@ -387,7 +403,8 @@ check("/duas: the page links to the account page", (await get("/duas")).body.inc
 // ---- the shared frame, on every page (app-navigation and site-shell specs) ----
 const FRAME_PAGES = [
   "/", "/bn", "/duas", "/bn/duas", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize",
-  "/account", "/bn/account", "/no-such-page",
+  "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/general-feedbacks",
+  "/bn/general-feedbacks", "/no-such-page",
   ...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]),
 ];
 for (const p of FRAME_PAGES) {
@@ -400,7 +417,13 @@ for (const p of FRAME_PAGES) {
   check(`${p}: no link to a page that doesn't exist`, !dead, dead?.[0]);
   check(`${p}: no "Duas Page"`, !body.includes("Duas Page"));
   check(`${p}: skip link to the main content`, /<a[^>]*href="#main"/.test(html) && /<main[^>]*id="main"/.test(html));
-  check(`${p}: footer`, /<footer[\s>]/.test(html) && /<footer[\s\S]*href="\/support"[\s\S]*<\/footer>/.test(html));
+  const footer = /<footer[\s\S]*<\/footer>/.exec(html)?.[0] ?? "";
+  const pre = langFromPathname(p) === "bn" ? "/bn" : "";
+  const footerLinks = [pre || "/", `${pre}/duas`, `${pre || "/"}#categories`, `${pre || "/"}#prayer-times`, `${pre}/bookmark`, `${pre}/about`, `${pre}/privacy-policy`, `${pre}/general-feedbacks`, `${pre}/account`];
+  const missingLinks = footerLinks.filter((href) => !footer.includes(`href="${href}"`));
+  check(`${p}: footer with its links in the page language`, footer !== "" && missingLinks.length === 0, missingLinks.join(" "));
+  check(`${p}: footer says support is paused, with no link to /support`, footer.includes("data-support-paused") && !footer.includes('href="/support"'));
+  if (p !== "/support") check(`${p}: no link to /support`, !html.includes('href="/support"'));
   check(`${p}: no third-party font address`, !/fonts\.(?:googleapis|gstatic)\.com/.test(body));
 }
 
@@ -449,10 +472,11 @@ for (const [p, text, home, duas] of [
   check("/serwist/sw.js: never cached by the browser", /no-cache/.test(cc) && /no-store/.test(cc), cc);
 
   const entryUrls = [...worker.matchAll(/\{(?:url:"([^"]+)",revision:[^}]+|revision:[^,}]+,url:"([^"]+)")\}/g)].map((m) => m[1] ?? m[2]);
-  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/bn", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account"];
+  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/bn", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/general-feedbacks", "/bn/general-feedbacks"];
   const missing = expectedPages.filter((u) => !entryUrls.includes(u));
   check(`worker precaches all ${expectedPages.length} pages (category pages come from the database)`, missing.length === 0, `missing: ${missing.join(" ")}`);
   check("worker precaches no audio and no /api/ URL", !entryUrls.some((u) => /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|weba)(\?|$)/i.test(u) || u.startsWith("/api/")));
+  check("worker does not precache the places table", !entryUrls.some((u) => u.includes("places")));
   check("worker precaches the font files", entryUrls.filter((u) => u.endsWith(".woff2")).length > 0);
 
   const off = await get("/offline");
@@ -556,6 +580,29 @@ for (const [p, text, home, duas] of [
 
   const getSync = await get("/api/sync");
   check("GET /api/sync: not allowed", getSync.status === 405, `status ${getSync.status}`);
+}
+
+// ---- information pages, support paused and feedback (apply-audit-pages-and-feedback) ----
+for (const [path, lang, marker] of [
+  ["/about", "en", 'data-info-page="about"'], ["/bn/about", "bn", 'data-info-page="about"'],
+  ["/privacy-policy", "en", 'data-info-page="privacy"'], ["/bn/privacy-policy", "bn", 'data-info-page="privacy"'],
+  ["/general-feedbacks", "en", "data-feedback-form"], ["/bn/general-feedbacks", "bn", "data-feedback-form"],
+]) {
+  const r = await get(path);
+  check(`${path}: 200 in ${lang}`, r.status === 200 && r.body.includes(marker) && new RegExp(`<div[^>]*lang="${lang}"`).test(r.body), `status ${r.status}`);
+}
+{
+  const privacy = (await get("/privacy-policy")).body;
+  check("/privacy-policy: names Resend and shows when it was updated", privacy.includes("Resend") && privacy.includes("data-updated"));
+  const support = (await get("/support")).body;
+  check("/support: the paused notice with a link home", support.includes("data-support-paused") && /href="\/"/.test(support));
+  const send = (body) => fetch(`${BASE}/api/general-feedbacks`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const bad = await send({ type: "other", message: "" });
+  check("POST /api/general-feedbacks: an invalid body is 400", bad.status === 400, `status ${bad.status}`);
+  const spam = await send({ type: "bug", message: "A message long enough", website: "http://spam.example" });
+  check("POST /api/general-feedbacks: the honeypot is answered 200", spam.status === 200, `status ${spam.status}`);
+  const pages = (await Promise.all(["/", "/general-feedbacks", "/privacy-policy"].map((p) => get(p)))).map((r) => r.body).join("");
+  check("no Resend key in the served pages", !/re_[A-Za-z0-9]{20,}/.test(pages));
 }
 
 console.log(`\n${passes} passed, ${failures} failed (${BASE})`);

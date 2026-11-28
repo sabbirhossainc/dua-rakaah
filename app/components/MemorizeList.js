@@ -35,7 +35,7 @@ function Group({ heading, entries, lang, records }) {
                     {learned ? <Icon name="check" size={16} /> : `${entry.progress}%`}
                   </Tag>
                 }
-                action={<MemorizeButton duaId={entry.id} lang={lang} showState={false} className="mr-2" />}
+                action={<MemorizeButton duaId={entry.id} lang={lang} showState={false} className="me-2" />}
               />
             </li>
           );

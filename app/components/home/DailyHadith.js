@@ -1,12 +1,13 @@
 "use client";
-// Today's hadith quote from the hand-picked list (design D8). Every listed quote is in the page; one is shown.
-import { useTodayInPlace } from "@/app/components/home/hooks";
-import { dayIndex } from "@/lib/home/picks";
+// The hadith quote of this date and prayer period, from the hand-picked list (design D5). Every listed quote is in the
+// page; one is shown. Before the scripts run it is the Dhuhr quote of the day the page was built.
+import { useHadithSlot } from "@/app/components/home/hooks";
+import { hadithIndex } from "@/lib/home/picks";
 import { t } from "@/lib/i18n";
 
-export default function DailyHadith({ lang, quotes }) {
-  const today = useTodayInPlace();
-  const index = today && quotes.length ? dayIndex(today, quotes.length) : 0;
+export default function DailyHadith({ lang, quotes, buildDate }) {
+  const slot = useHadithSlot() ?? { date: buildDate, period: "dhuhr" };
+  const index = quotes.length ? hadithIndex(slot.date, slot.period, quotes.length) : 0;
   return quotes.map((quote, i) => (
     <figure key={quote.key} hidden={i !== index} data-home-quote={quote.key} className="max-w-reading">
       <blockquote className="font-heading text-card-title whitespace-pre-line text-ink italic">{quote.text}</blockquote>

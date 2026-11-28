@@ -1,6 +1,11 @@
 {
-  "note": "Hand-picked content for the home page, by dua.id in dua_main.sqlite. part is 1 for a dua's first row; field is the row's top or bottom text. Awaiting review by the Hafez.",
-  "duas": [4, 24, 245, 8, 207, 29, 15, 133, 23],
+  "note": "Hand-picked content for the home page, by dua.id in dua_main.sqlite. part is 1 for a dua's first row; field is the row's top or bottom text. duas has one list for each part of the day: morning (Fajr until Dhuhr), day (Dhuhr until Asr), evening (Asr until Isha) and night (Isha until Fajr). Awaiting review by the Hafez.",
+  "duas": {
+    "morning": [102, 103, 104, 105, 106, 115],
+    "day": [4, 24, 8, 29, 15, 23, 139, 140],
+    "evening": [109, 110, 111, 112, 113, 115],
+    "night": [207, 208, 209, 210, 201, 202]
+  },
   "hadith": [
     { "dua_id": 45, "part": 1, "field": "top" },
     { "dua_id": 137, "part": 1, "field": "bottom" },
@@ -9,6 +14,29 @@
     { "dua_id": 143, "part": 1, "field": "bottom" },
     { "dua_id": 43, "part": 1, "field": "top" },
     { "dua_id": 230, "part": 1, "field": "top" },
-    { "dua_id": 44, "part": 1, "field": "top" }
+    { "dua_id": 44, "part": 1, "field": "top" },
+    { "dua_id": 12, "part": 1, "field": "bottom" },
+    { "dua_id": 16, "part": 1, "field": "bottom" },
+    { "dua_id": 27, "part": 1, "field": "bottom" },
+    { "dua_id": 30, "part": 2, "field": "bottom" },
+    { "dua_id": 35, "part": 1, "field": "top" },
+    { "dua_id": 36, "part": 1, "field": "top" },
+    { "dua_id": 39, "part": 1, "field": "top" },
+    { "dua_id": 42, "part": 1, "field": "top" },
+    { "dua_id": 54, "part": 1, "field": "top" },
+    { "dua_id": 56, "part": 1, "field": "bottom" },
+    { "dua_id": 57, "part": 1, "field": "bottom" },
+    { "dua_id": 61, "part": 1, "field": "top" },
+    { "dua_id": 63, "part": 1, "field": "top" },
+    { "dua_id": 72, "part": 1, "field": "top" },
+    { "dua_id": 75, "part": 1, "field": "bottom" },
+    { "dua_id": 77, "part": 1, "field": "top" },
+    { "dua_id": 119, "part": 1, "field": "bottom" },
+    { "dua_id": 126, "part": 3, "field": "bottom" },
+    { "dua_id": 203, "part": 1, "field": "bottom" },
+    { "dua_id": 228, "part": 1, "field": "top" },
+    { "dua_id": 234, "part": 1, "field": "bottom" },
+    { "dua_id": 245, "part": 1, "field": "bottom" },
+    { "dua_id": 251, "part": 1, "field": "top" }
   ]
 }

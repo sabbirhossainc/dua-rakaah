@@ -4,7 +4,7 @@ import Image from "next/image";
 import ListCard from "@/app/components/ui/ListCard";
 import { getCategories } from "@/lib/db";
 import { categoryHref, pick } from "@/lib/content";
-import { fmt, t } from "@/lib/i18n";
+import { fmt } from "@/lib/i18n";
 
 export default function CategoryList({ lang }) {
   return (
@@ -15,7 +15,7 @@ export default function CategoryList({ lang }) {
             href={categoryHref(cat, lang)}
             icon={<Image src={`/images/${cat.cat_icon}.svg`} alt="" width={28} height={28} />}
             title={pick(cat, "cat_name", lang)}
-            meta={`${fmt(lang, "duaCount", { n: cat.dua_count })} · ${t(lang, "subcategory")}: ${cat.subcat_count}`}
+            meta={fmt(lang, "duaCount", { n: cat.dua_count })}
             chevron
           />
         </li>

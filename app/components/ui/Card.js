@@ -16,7 +16,7 @@ export default function Card({ as: Element = "div", variant = "surface", tag, ac
     <Element className={`relative flex min-w-0 flex-col rounded-card border border-line p-card shadow-card ${VARIANTS[variant]} ${className}`} {...props}>
       {variant === "emerald" && <Ornament kind="lattice" className="rounded-card" />}
       {art && (
-        <span aria-hidden="true" className="pointer-events-none absolute right-3 bottom-3 opacity-30">
+        <span aria-hidden="true" className="pointer-events-none absolute end-3 bottom-3 opacity-30">
           {art}
         </span>
       )}

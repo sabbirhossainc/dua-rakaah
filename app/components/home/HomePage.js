@@ -1,4 +1,4 @@
-// The home page for one language: eight sections in a fixed order (design D9). It is built once, when the app is
+// The home page for one language: seven sections in a fixed order (design D9). It is built once, when the app is
 // built; everything about the reader's time and place is filled in by the browser.
 import CategoryGrid from "@/app/components/content/CategoryGrid";
 import DailyDuas from "@/app/components/home/DailyDuas";
@@ -11,11 +11,15 @@ import SectionHeading from "@/app/components/ui/SectionHeading";
 import homePicks from "@/data/home-picks.json";
 import { langPrefix } from "@/lib/content";
 import { getCategories, getDua } from "@/lib/db";
+import { dateInZone } from "@/lib/prayer/dates";
 import { buildHomePicks } from "@/lib/home/picks";
 import { t } from "@/lib/i18n";
 
+// The date the page is built on: its hadith is the one shown before the scripts run.
+const BUILD_DATE = dateInZone(Date.now(), "UTC");
+
 export default function HomePage({ lang }) {
-  const { duas, quotes } = buildHomePicks({ picks: homePicks, getDua, categories: getCategories() }, lang);
+  const { duas, lists, quotes } = buildHomePicks({ picks: homePicks, getDua, categories: getCategories() }, lang);
   const allDuas = (className) => (
     <Button variant="outline" href={`${langPrefix(lang)}/duas`} className={className}>
       {t(lang, "homeAllDuas")}
@@ -34,32 +38,17 @@ export default function HomePage({ lang }) {
       <Section data-home-card="duas">
         {/* Beside the heading from 768px, and after the cards below that: one of the two is shown. */}
         <SectionHeading title={t(lang, "homeDuasTitle")} action={allDuas("hidden! md:inline-flex!")} />
-        <DailyDuas lang={lang} duas={duas} />
+        <DailyDuas lang={lang} duas={duas} lists={lists} />
         <div className="mt-cards flex justify-center md:hidden">{allDuas("")}</div>
       </Section>
-      <Section band="sand" data-home-card="categories">
+      <Section id="categories" band="sand" data-home-card="categories">
         <SectionHeading title={t(lang, "categories")} />
         <CategoryGrid lang={lang} />
       </Section>
-      {/* Side by side from 1024px, the hadith taking two thirds. */}
-      <Section as="div" containerClassName="grid gap-cards lg:grid-cols-3">
-        <Card as="section" variant="sand" data-home-card="hadith" className="lg:col-span-2">
+      <Section as="div">
+        <Card as="section" variant="sand" data-home-card="hadith">
           <SectionHeading title={t(lang, "homeHadithTitle")} />
-          <DailyHadith lang={lang} quotes={quotes} />
-        </Card>
-        <Card
-          as="section"
-          variant="emerald"
-          data-home-card="donation"
-          // No payment is taken here: the button only leads to the support page.
-          action={
-            <Button variant="gold" href="/support">
-              {t(lang, "supportUs")}
-            </Button>
-          }
-        >
-          <SectionHeading title={t(lang, "homeDonationTitle")} />
-          <p className="text-reading">{t(lang, "homeDonationBody")}</p>
+          <DailyHadith lang={lang} quotes={quotes} buildDate={BUILD_DATE} />
         </Card>
       </Section>
     </div>

@@ -94,8 +94,8 @@ exposed to screen readers.
 - **THEN** the Settings panel opens, and the entry reports itself as expanded
 
 ### Requirement: Account and support reachable at every width
-The site header SHALL show the sign-in or account control at every width. The `/support` page SHALL be reachable from
-the Settings panel and from the site footer at every width, with a label in the page's language.
+The site header SHALL show the sign-in or account control at every width. While support is paused, the Settings panel,
+the header, the bottom bar and the footer SHALL NOT link to `/support`.
 
 #### Scenario: Account on a phone
 - **WHEN** a reader opens `/` on a 360px-wide screen
@@ -103,8 +103,8 @@ the Settings panel and from the site footer at every width, with a label in the 
 
 #### Scenario: Support link
 - **WHEN** a reader on `/bn` on a 390px-wide screen opens the Settings panel
-- **THEN** it holds a link to `/support` labelled in Bangla
-- **AND** the footer holds the same link
+- **THEN** it holds no link to `/support`
+- **AND** neither does the footer
 
 ### Requirement: Navigation usable with the keyboard
 Every navigation entry SHALL be reachable with the Tab key in on-screen order and SHALL show a visible focus indicator.

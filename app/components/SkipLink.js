@@ -10,7 +10,7 @@ export default function SkipLink() {
     <a
       href="#main"
       lang={lang}
-      className="sr-only rounded-full bg-primary text-ui font-semibold text-on-primary focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-5 focus:py-3"
+      className="sr-only rounded-full bg-primary text-ui font-semibold text-on-primary focus:not-sr-only focus:fixed focus:top-2 focus:start-2 focus:z-50 focus:px-5 focus:py-3"
     >
       {t(lang, "skipToContent")}
     </a>

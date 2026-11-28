@@ -10,8 +10,11 @@ const VARIANTS = {
   danger: "border-danger text-danger hover:bg-danger/10",
 };
 
-// 44px and 52px high. A button with an icon and no text is as wide as it is high.
+// 36px, 44px and 52px high. A button with an icon and no text is as wide as it is high. `sm` is the default (design D1
+// of apply-audit-pages-and-feedback): it is drawn 36px high, and a pseudo-element 4px beyond each edge keeps its target
+// 44px. Neighbouring `sm` buttons need a gap of at least 8px so those areas do not overlap.
 const SIZES = {
+  sm: { text: "min-h-9 px-4 py-1 relative after:absolute after:-inset-1 after:content-['']", icon: "size-9 relative after:absolute after:-inset-1 after:content-['']" },
   md: { text: "min-h-11 px-5 py-2", icon: "size-11" },
   lg: { text: "min-h-13 px-7 py-3", icon: "size-13" },
 };
@@ -19,7 +22,7 @@ const SIZES = {
 /** With `href` it is a link, otherwise a button. `icon` names an icon shown before the text. */
 export default function Button({
   variant = "primary",
-  size = "md",
+  size = "sm",
   href,
   icon,
   iconFilled = false,

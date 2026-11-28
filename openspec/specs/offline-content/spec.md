@@ -88,21 +88,37 @@ worker left on the same origin by an earlier production run SHALL be removed, to
 - **WHEN** a page is opened from the development server
 - **THEN** that worker is unregistered and its saved files are deleted, and the development page is shown, not a saved one
 
-### Requirement: Home page readable offline
+### Requirement: Home page works offline
 After the app has finished installing, `/` and `/bn` SHALL load with no network, show every card, and compute the
-prayer times, the countdown and the Hijri date as when online. Only "Use my location" MAY depend on the device's own
-location service.
+prayer times, the countdown and the Hijri date as when online. Only reading the device's position MAY depend on the
+device's own location service; without it the saved position or the capital SHALL be used. A saved position SHALL show
+the name last found for it.
 
 #### Scenario: Bangla home page offline
 - **GIVEN** a reader opened `/duas` online and waited for the app to finish installing
 - **WHEN** the network is turned off and the reader opens `/bn`
 - **THEN** all eight cards are shown in Bangla, with the day's prayer times and a running countdown
 
-#### Scenario: Town list offline
-- **GIVEN** an offline reader on `/`
-- **WHEN** the reader picks another district town
-- **THEN** the times are recomputed for it with no network
+#### Scenario: Capital offline
+- **GIVEN** an offline reader who has not allowed the position
+- **WHEN** the reader opens `/`
+- **THEN** the capital for the device's time zone and its times are shown with no network
 
 #### Scenario: Saved set
 - **WHEN** the app is built
 - **THEN** the saved set contains both `/` and `/bn`, and the home page's background pattern
+
+### Requirement: Information pages offline
+After the app has finished installing, `/about`, `/privacy-policy`, `/general-feedbacks` and their `/bn/...` versions
+SHALL load with no network and show the same content as when online. When the device is offline, the feedback form
+SHALL say in the page's language that sending needs a connection, and SHALL keep what the reader typed.
+
+#### Scenario: About offline
+- **GIVEN** a reader opened `/` online and waited for the app to finish installing
+- **WHEN** the network is turned off and the reader opens `/bn/about`
+- **THEN** the page loads with its full Bangla content
+
+#### Scenario: Sending feedback offline
+- **GIVEN** the device is offline on `/general-feedbacks`
+- **WHEN** the reader fills the form and sends it
+- **THEN** the page says a connection is needed, and the fields keep what was typed
