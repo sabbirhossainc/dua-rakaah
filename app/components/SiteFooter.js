@@ -54,7 +54,7 @@ export default function SiteFooter() {
     // Below 1024px the band reaches under the bottom bar, and its content ends above it.
     <footer lang={lang} className="on-emerald pb-(--bottom-bar)">
       <Section as="div" band="emerald" containerClassName="flex flex-col gap-8">
-        <div className="grid gap-8 text-center lg:grid-cols-3 lg:text-start">
+        <div className="flex flex-col items-center gap-8 text-center lg:flex-row lg:items-start lg:justify-between lg:text-start">
           <div className="flex flex-col items-center gap-3 lg:items-start">
             <span className="flex items-center gap-2">
               <Mark size={36} />
@@ -62,7 +62,7 @@ export default function SiteFooter() {
             </span>
             <p className="max-w-reading text-ui">{t(lang, "footerMission")}</p>
             {/* A span, not a paragraph: paragraphs in Arabic are the dua texts. */}
-            <span lang="ar" dir="rtl" className="block text-[28px] leading-[2] text-gold">
+            <span lang="ar" dir="rtl" className="block text-[28px] leading-loose text-gold">
               {ARABIC_LINE}
             </span>
             <p className="max-w-reading text-label">{t(lang, "footerArabicMeaning")}</p>
@@ -76,7 +76,6 @@ export default function SiteFooter() {
         <Ornament kind="rule" />
         <div className="flex flex-col items-center gap-2 text-center text-label lg:flex-row lg:justify-between lg:text-start">
           <p>{fmt(lang, "footerCopyright", { year: formatNumber(YEAR, lang).replace(/[,،]/g, "") })}</p>
-          <p>{t(lang, "footerLangNote")}</p>
           <p>{t(lang, "supportPaused")}</p>
         </div>
       </Section>
