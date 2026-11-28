@@ -680,3 +680,26 @@ html:has(.sheet:modal) {
   border-color: #ffffff;
   color: #0a2b25;
 }
+
+/* Thin scrollbars everywhere, themed from the palette tokens. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-edge) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-edge);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-primary);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
