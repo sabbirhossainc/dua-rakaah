@@ -1,9 +1,9 @@
 "use client";
-// The header at every width: the mark and name, from 1024px the navigation as text links, and the account control
-// (design D6).
+// The header at every width: the mark and name, from 1024px the services as text links, then the Settings icon and
+// the account menu (design D6).
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import AccountControl from "@/app/components/AccountControl";
+import AccountMenu from "@/app/components/AccountMenu";
 import { useSettings } from "@/app/components/SettingsProvider";
 import Wordmark, { Mark } from "@/app/components/ui/Wordmark";
 import { Icon } from "@/app/components/ui/icons";
@@ -30,23 +30,26 @@ export default function SiteHeader() {
           <ul className="flex items-center gap-1">
             {navEntries(pathname).map((entry) => (
               <li key={entry.key}>
-                {entry.href === null ? (
-                  <button type="button" aria-haspopup="dialog" aria-expanded={settings.open} onClick={settings.show} className={ENTRY}>
-                    <Icon name={entry.key} size={20} />
-                    {t(lang, entry.label)}
-                  </button>
-                ) : (
-                  <Link href={entry.href} aria-current={entry.current ? "page" : undefined} className={ENTRY}>
-                    {t(lang, entry.label)}
-                  </Link>
-                )}
+                <Link href={entry.href} aria-current={entry.current ? "page" : undefined} className={ENTRY}>
+                  {t(lang, entry.label)}
+                </Link>
               </li>
             ))}
           </ul>
         </nav>
-        {/* Keeps its width before the account is known, so the navigation doesn't move. */}
-        <div className="flex min-w-24 shrink-0 justify-end">
-          <AccountControl />
+        {/* Settings as an icon beside the account menu. Keeps its width before the account is known. */}
+        <div className="flex min-w-20 shrink-0 items-center justify-end gap-2">
+          <button
+            type="button"
+            aria-label={t(lang, "navSettings")}
+            aria-haspopup="dialog"
+            aria-expanded={settings.open}
+            onClick={settings.show}
+            className="relative flex size-9 cursor-pointer items-center justify-center rounded-full border border-transparent text-ink transition-colors after:absolute after:-inset-1 after:content-[''] hover:bg-tint motion-reduce:transition-none"
+          >
+            <Icon name="settings" size={20} />
+          </button>
+          <AccountMenu />
         </div>
       </div>
     </header>

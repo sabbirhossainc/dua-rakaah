@@ -1,9 +1,8 @@
 "use client";
-// The navigation below 1024px: a bar fixed to the bottom of the screen, with an icon and a label for each entry
+// The services below 1024px: a bar fixed to the bottom of the screen, with an icon and a label for each entry
 // (design D6). `display: none` at the other width takes it out of the accessibility tree and the tab order.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSettings } from "@/app/components/SettingsProvider";
 import { Icon } from "@/app/components/ui/icons";
 import { langFromPathname } from "@/lib/content";
 import { t } from "@/lib/i18n";
@@ -28,25 +27,18 @@ function Face({ name, label }) {
 export default function BottomNav() {
   const pathname = usePathname();
   const lang = langFromPathname(pathname);
-  const settings = useSettings();
   return (
     <nav
       aria-label={t(lang, "navLabel")}
       lang={lang}
       className="fixed inset-x-0 bottom-0 z-40 h-(--bottom-bar) border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid h-full grid-cols-5">
+      <ul className="grid h-full grid-cols-3">
         {navEntries(pathname).map((entry) => (
           <li key={entry.key} className="min-w-0">
-            {entry.href === null ? (
-              <button type="button" aria-haspopup="dialog" aria-expanded={settings.open} onClick={settings.show} className={ENTRY}>
-                <Face name={entry.key} label={t(lang, entry.label)} />
-              </button>
-            ) : (
-              <Link href={entry.href} aria-current={entry.current ? "page" : undefined} className={ENTRY}>
-                <Face name={entry.key} label={t(lang, entry.label)} />
-              </Link>
-            )}
+            <Link href={entry.href} aria-current={entry.current ? "page" : undefined} className={ENTRY}>
+              <Face name={entry.key} label={t(lang, entry.label)} />
+            </Link>
           </li>
         ))}
       </ul>
