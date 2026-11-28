@@ -30,24 +30,30 @@ shown. The page content SHALL NOT be hidden behind the bottom bar.
 - **THEN** every navigation entry is visible without sideways scrolling
 
 ### Requirement: Only working destinations
-The navigation SHALL list Home, Duas, Saved (the bookmark page), Memorize and Settings, in that order. It SHALL NOT list
-a destination whose page doesn't exist.
+The navigation SHALL list the app's services: Home, Duas and Rakaah, in that order. The reader's own pages (Saved,
+Memorize and the profile) SHALL be in the account menu, and Settings SHALL be a control in the site header, not
+navigation entries. It SHALL NOT list a destination whose page doesn't exist.
 
 #### Scenario: Entries
 - **WHEN** a reader looks at the navigation on `/`
-- **THEN** it shows exactly Home, Duas, Saved, Memorize and Settings, in that order
+- **THEN** it shows exactly Home, Duas and Rakaah, in that order
 
 #### Scenario: Pages not built yet
-- **GIVEN** `/rakaah`, `/alldua`, `/dua-info` and `/books` don't exist
+- **GIVEN** `/alldua`, `/dua-info` and `/books` don't exist
 - **WHEN** any page is served
 - **THEN** its HTML has no link to any of them
 
 ### Requirement: Destinations follow the page language
-The Home, Duas, Saved and Memorize entries SHALL link to the page in the current page's language: `/`, `/duas`,
-`/bookmark` and `/memorize` from English pages, and `/bn`, `/bn/duas`, `/bn/bookmark` and `/bn/memorize` from Bangla pages.
+The Home, Duas and Rakaah entries SHALL link to the page in the current page's language: `/`, `/duas` and `/rakaah`
+from English pages, and `/bn`, `/bn/duas` and `/bn/rakaah` from Bangla pages. The account menu's entries SHALL do the
+same: `/bookmark`, `/memorize` and `/account`, or `/bn/bookmark`, `/bn/memorize` and `/bn/account`.
 
 #### Scenario: From a Bangla page
-- **WHEN** a reader on `/bn/duas/sleep?cat=6` activates Saved
+- **WHEN** a reader on `/bn/duas/sleep?cat=6` activates Rakaah
+- **THEN** the browser goes to `/bn/rakaah`
+
+#### Scenario: Account menu from a Bangla page
+- **WHEN** a reader on `/bn/duas/sleep?cat=6` opens the account menu and activates Saved
 - **THEN** the browser goes to `/bn/bookmark`
 
 #### Scenario: From an English page
@@ -81,12 +87,13 @@ and only one navigation landmark SHALL be exposed at a time.
 - **WHEN** a screen reader lists the landmarks of `/duas` on a 1280px-wide screen
 - **THEN** one primary navigation is listed, with an English name
 
-### Requirement: Settings entry opens the Settings panel
-The Settings entry SHALL open the Settings panel on the current page, without leaving it. Its expanded state SHALL be
-exposed to screen readers.
+### Requirement: Settings control opens the Settings panel
+Settings SHALL be an icon button in the site header, beside the account control, at every width, with an accessible
+name in the page's language. It SHALL open the Settings panel on the current page, without leaving it. Its expanded
+state SHALL be exposed to screen readers.
 
-#### Scenario: Open from the bottom bar
-- **WHEN** a reader on `/duas/sleep?cat=6#dua-200` on a 390px-wide screen activates Settings
+#### Scenario: Open on a phone
+- **WHEN** a reader on `/duas/sleep?cat=6#dua-200` on a 390px-wide screen activates Settings in the header
 - **THEN** the Settings panel opens, and the address is still `/duas/sleep?cat=6#dua-200`
 
 #### Scenario: Open from the header
@@ -94,12 +101,13 @@ exposed to screen readers.
 - **THEN** the Settings panel opens, and the entry reports itself as expanded
 
 ### Requirement: Account and support reachable at every width
-The site header SHALL show the sign-in or account control at every width. While support is paused, the Settings panel,
-the header, the bottom bar and the footer SHALL NOT link to `/support`.
+The site header SHALL show the account control at every width. It SHALL open a menu with Saved and Memorize, the
+profile (`/account`) when the reader is signed in, and the sign-in or sign-out action. While support is paused, the
+Settings panel, the header, the bottom bar and the footer SHALL NOT link to `/support`.
 
 #### Scenario: Account on a phone
-- **WHEN** a reader opens `/` on a 360px-wide screen
-- **THEN** the site header shows the sign-in control, or the account control when signed in
+- **WHEN** a reader who is not signed in opens `/` on a 360px-wide screen and activates the account control
+- **THEN** a menu opens with Saved, Memorize and the sign-in action, and no profile entry
 
 #### Scenario: Support link
 - **WHEN** a reader on `/bn` on a 390px-wide screen opens the Settings panel
@@ -111,4 +119,5 @@ Every navigation entry SHALL be reachable with the Tab key in on-screen order an
 
 #### Scenario: Tabbing through the header
 - **WHEN** a keyboard user on a 1280px-wide screen tabs from the skip link
-- **THEN** focus moves through the header's logo link and navigation entries in order, each visibly focused
+- **THEN** focus moves through the header's logo link, the navigation entries, Settings and the account control in
+  order, each visibly focused

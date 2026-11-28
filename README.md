@@ -169,6 +169,9 @@ from 1024px. The designs are in `openspec/changes/archive/2026-11-26-add-home-pa
 
 ## Hosting
 
+The app is deployed on Netlify at https://dua-rakaah.netlify.app (build settings in `netlify.toml`). Check a deploy
+with `BASE_URL=https://dua-rakaah.netlify.app npm run smoke`.
+
 Category pages read `?cat=N`, so they render on each request and the app needs a Node server.
 Static-only hosting (`output: 'export'`) will not work. A service worker needs HTTPS (`localhost` is fine). `/duas` and `/bn/duas` are prerendered.
 `next.config.mjs` makes sure `data/dua_main.sqlite` is included in the deployment output.

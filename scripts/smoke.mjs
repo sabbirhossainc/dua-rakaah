@@ -417,7 +417,7 @@ for (const p of FRAME_PAGES) {
   const headings = (html.match(/<h1[\s>]/g) ?? []).length;
   check(`${p}: exactly one h1`, headings === 1, `found ${headings}`);
   check(`${p}: no empty or "#" link`, !/href="#?"/.test(html), /<a[^>]*href="#?"[^>]*>/.exec(html)?.[0]);
-  const dead = /href="[^"]*\/(?:rakaah|alldua|dua-info|books)(?:["/?#])/.exec(html);
+  const dead = /href="[^"]*\/(?:alldua|dua-info|books)(?:["/?#])/.exec(html);
   check(`${p}: no link to a page that doesn't exist`, !dead, dead?.[0]);
   check(`${p}: no "Duas Page"`, !body.includes("Duas Page"));
   check(`${p}: skip link to the main content`, /<a[^>]*href="#main"/.test(html) && /<main[^>]*id="main"/.test(html));
@@ -434,15 +434,15 @@ for (const p of FRAME_PAGES) {
 // The header's copy of the navigation. The bottom bar is built from the same function (lib/nav.js).
 const headerNav = (html) => /<header[\s\S]*?<nav[^>]*>([\s\S]*?)<\/nav>/.exec(noScripts(html))?.[1] ?? "";
 for (const [p, prefix, labels] of [
-  ["/", "", ["Home", "Duas", "Saved", "Memorize", "Settings"]],
-  ["/bn", "/bn", ["হোম", "দোয়া", "সংরক্ষিত", "মুখস্থ", "সেটিংস"]],
+  ["/", "", ["Home", "Duas", "Rakaah"]],
+  ["/bn", "/bn", ["হোম", "দোয়া", "রাকাত"]],
 ]) {
   const nav = headerNav((await get(p)).body);
   const entries = [...nav.matchAll(/<(a|button)\b[^>]*>[\s\S]*?<\/\1>/g)].map((m) => m[0]);
   const names = entries.map((e) => visibleText(e).trim());
   const links = entries.map((e) => /href="([^"]*)"/.exec(e)?.[1] ?? null);
-  check(`${p}: the five navigation entries in order`, JSON.stringify(names) === JSON.stringify(labels), names.join(","));
-  const wanted = [prefix || "/", `${prefix}/duas`, `${prefix}/bookmark`, `${prefix}/memorize`, null];
+  check(`${p}: the three navigation entries in order`, JSON.stringify(names) === JSON.stringify(labels), names.join(","));
+  const wanted = [prefix || "/", `${prefix}/duas`, `${prefix}/rakaah`];
   check(`${p}: navigation links in the page's language`, JSON.stringify(links) === JSON.stringify(wanted), JSON.stringify(links));
 }
 for (const [p, href] of [[pathFor(sleep, "en"), "/duas"], [pathFor(sleep, "bn"), "/bn/duas"]]) {
@@ -604,6 +604,12 @@ for (const [path, lang, marker] of [
     ["www.hisnmuslim.com", "verses.quran.com", "verses.quran.foundation", "audio.qurancdn.com", "quranicaudio.com", "Turso", "dua_anon"].every((s) => privacy.includes(s)),
   );
   check("/privacy-policy: links to the Terms of Use", privacy.includes('href="/terms-of-use"'));
+  const shared = ["quran.foundation", "www.hisnmuslim.com", "adhan-js", "MIT", "GeoNames", "IANA", "tanzil.net"];
+  for (const [path, own] of [["/about", ["IRD Foundation", "4.0", "3.0"]], ["/bn/about", ["আইআরডি ফাউন্ডেশন", "৪.০", "৩.০"]]]) {
+    const about = (await get(path)).body;
+    const missing = [...shared, ...own].filter((s) => !about.includes(s));
+    check(`${path}: credits the sources and names IRD Foundation`, about.includes('id="credits"') && missing.length === 0, missing.join(" "));
+  }
   for (const [path, pre] of [["/terms-of-use", ""], ["/bn/terms-of-use", "/bn"]]) {
     const terms = (await get(path)).body;
     check(`${path}: shows when it was updated and links to the Privacy Policy`, terms.includes("data-updated") && terms.includes(`href="${pre}/privacy-policy"`));

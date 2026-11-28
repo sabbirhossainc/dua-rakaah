@@ -6,7 +6,7 @@ Facts in this file come from the repo unless marked "not found". Where the repo 
 
 ## Status on 2026-11-28
 
-Checked against the repo at commit `3f43e8b`. Steps done outside the repo (emails, the Developer Console, listening, iOS) leave no trace there, so they count as not done until the results log at the end says otherwise. The log is still empty.
+Checked against the repo at commit `3f43e8b`. Steps done outside the repo (emails, the Developer Console, listening, iOS) leave no trace there, so they count as not done until the results log at the end says otherwise. The log has the two page URLs from the first deploy (2026-11-28); the rest is empty.
 
 | Item | State | What is left |
 |---|---|---|
@@ -14,12 +14,12 @@ Checked against the repo at commit `3f43e8b`. Steps done outside the repo (email
 | 2. Production access, listening, basmala | Not started (blocked by item 1, and by 4a for the request) | All of it |
 | 3a. Partial and near matches | Not started. `data/audio-review.json` holds only the 5 holds from 4b. | All 7 rows |
 | 3b. iOS Safari | Not started (needs production credentials and an HTTPS host) | All of it. Two notes were out of date after the redesign and are corrected below. |
-| 4a. Privacy Policy | **Partly done.** `/privacy-policy` and `/bn/privacy-policy` exist, are linked from the footer, saved for offline use and smoke-tested. The three wrong statements were fixed and the missing sections added on 2026-11-28. | The facts the repo doesn't have: hosting provider, operator, purge schedule. Then a check against "Developer obligations", and the legal and Bangla reviews (see 4a). |
+| 4a. Privacy Policy | **Partly done.** `/privacy-policy` and `/bn/privacy-policy` exist, are linked from the footer, saved for offline use and smoke-tested. The three wrong statements were fixed and the missing sections added on 2026-11-28. | The facts the repo doesn't have: operator, purge schedule, and the hosting provider written into the page (it is Netlify, at https://dua-rakaah.netlify.app; the page still says only "the host"). Then a check against "Developer obligations", and the legal and Bangla reviews (see 4a). |
 | 4a. Terms of Use | **Partly done.** `/terms-of-use` and `/bn/terms-of-use` exist (text `TERMS` in `lib/pages/info.js`, dated `TERMS_UPDATED` 2026-11-28, Bangla a draft), are linked from the footer and from the Privacy Policy, saved for offline use and smoke-tested. | The facts the repo doesn't have: operator, governing law, and the source and license of the dua texts and translations. Then the legal and Bangla reviews (see 4a). |
 | 4b. Hisn al-Muslim terms, Hafez review, holds, coverage, schedules, offline check | Not started. Nothing schedules `audio:check` or `db:user:purge` (no cron, scheduled task or CI workflow). | All of it |
 | 4b. README housekeeping | **Done.** The merge-conflict markers are gone, and the settings design path points at the archive. | Nothing |
-| New: `npm run smoke` is out of date | Open | Since `7afe818` (Raka'ah navigation), 39 checks still call `/rakaah` a dead link (`scripts/smoke.mjs`, about line 420), and 4 still expect the old five-entry navigation. Update the script. Also, the script runs against port 3000 unless `BASE_URL` is set, so run it as `BASE_URL=http://localhost:3100 npm run smoke` after `npm start -- -p 3100`. |
-| New: About page claim | Open | The About page says the content "is reviewed by a Hafez before it is published", which is not true yet (see 4b). |
+| New: `npm run smoke` is out of date | **Done** (2026-11-28). `/rakaah` is no longer called a dead link, and the navigation check expects Home, Duas, Rakaah. Against https://dua-rakaah.netlify.app: 979 passed, 0 failed. | Nothing. The script runs against port 3000 unless `BASE_URL` is set: `BASE_URL=http://localhost:3100 npm run smoke` after `npm start -- -p 3100`, or `BASE_URL=https://dua-rakaah.netlify.app npm run smoke` for the live site. |
+| New: About page claim | **Done** (2026-11-28). The About page now says the content has not yet been reviewed by a Hafez. It also credits IRD Foundation for the dua collection, and has a Credits section (Quran Foundation, Hisn al-Muslim, adhan-js, GeoNames, IANA, Tanzil). | Change the review sentence back once the Hafez review is done (4b). Bangla is a draft. |
 
 Quick reference
 
@@ -58,7 +58,7 @@ Quick reference
 
 > Assalamu alaikum,
 >
-> I am writing about an app registered in the Developer Console (Client ID: [Client ID]; app name: [App name], at [App URL]). I would like to confirm that our use of the Content API complies with the Developer Terms (last updated 2026-11-20), and ask about the Content Sync rule before we launch.
+> I am writing about an app registered in the Developer Console (Client ID: [Client ID]; app name: [App name], at https://dua-rakaah.netlify.app/). I would like to confirm that our use of the Content API complies with the Developer Terms (last updated 2026-11-20), and ask about the Content Sync rule before we launch.
 >
 > **The app.** "[App name]" is an Islamic dua (supplication) website, built with Next.js, that shows duas by category in English and Bangla, with the Arabic text taken from our own database. For the duas that are Quran verses, it plays the Quran.com recitation, and the reader can choose a reciter. We have registered a Backend/server app with the scope `content.audio.read`. We do not use the Quran text from your API.
 >
@@ -83,7 +83,7 @@ Quick reference
 > Jazakum Allahu khayran for your time.
 >
 > [Your name]
-> [App name] | [App URL]
+> [App name] | https://dua-rakaah.netlify.app/
 > Client ID: [Client ID]
 
 (Facts in the email, for you to double-check: 16 parts and 53 distinct verses come from `data/audio-sources.json`, version 2; 24-hour in-memory keep is `KEEP_MS` in `lib/quran/recitations.js`; the hosts are the allow-list in the same file; the two calls are `recitations.list` and `verseRecitation.byKey`.)
@@ -119,7 +119,7 @@ The docs pages read on 2026-11-26 do not say how production approval works, whet
 
 > Assalamu alaikum,
 >
-> We would like to request production access for our Backend/server app "[App name]" ([App URL]), Client ID [Client ID], scope `content.audio.read`. It is an Islamic dua website that plays Quran.com verse recitations (server-side calls only; only addresses on your audio hosts are passed on; credit to Quran Foundation and the reciter is shown; nothing is rehosted). Our Privacy Policy is at [Privacy Policy URL] and our Terms of Use at [Terms of Use URL]. We have tested on pre-live (surahs 1 and 2). Please tell us what else you need from us, and how long approval usually takes.
+> We would like to request production access for our Backend/server app "[App name]" (https://dua-rakaah.netlify.app/), Client ID [Client ID], scope `content.audio.read`. It is an Islamic dua website that plays Quran.com verse recitations (server-side calls only; only addresses on your audio hosts are passed on; credit to Quran Foundation and the reciter is shown; nothing is rehosted). Our Privacy Policy is at https://dua-rakaah.netlify.app/privacy-policy and our Terms of Use at https://dua-rakaah.netlify.app/terms-of-use. We have tested on pre-live (surahs 1 and 2). Please tell us what else you need from us, and how long approval usually takes.
 >
 > Jazakum Allahu khayran,
 > [Your name]
@@ -225,7 +225,7 @@ Duas 126 and 205 also list parts with verse entries; their verses (112, 113, 114
 
 Not yet done on any iPhone or iPad. The player (`lib/audio/player.js`, `app/components/DuaAudio.js`) was written with Safari in mind (design risk: "Safari may refuse `play()` after waiting for the server"): on a `NotAllowedError` the button goes back to the play state without counting a failure, and a second press uses the kept answer.
 
-**What you need.** A real iPhone or iPad with Safari, and a site served over HTTPS (the service worker only works on HTTPS; localhost does not help a phone). Use the production-credentialed build on a staging or production URL: pre-live only has surahs 1 and 2. Not found: the staging or production host. Fill in: [test URL].
+**What you need.** A real iPhone or iPad with Safari, and a site served over HTTPS (the service worker only works on HTTPS; localhost does not help a phone). Use the production-credentialed build on a staging or production URL: pre-live only has surahs 1 and 2. The production host is https://dua-rakaah.netlify.app/ (Netlify, deployed 2026-11-28). It runs on pre-live credentials until item 2 switches them, so test there after the switch.
 
 - [ ] On iOS Safari, online, open the category pages holding duas 202 (2:285-286), 125 (2:255 plus a Hisn al-Muslim recording), 204 (112:1-4) and 143 (18:1-10). Find each card by its dua id in `data/dua_main.sqlite`. A recitation control appears under the Arabic text after the page loads, never before.
 - [ ] **First press plays.** Tap play on a Quran part. Note whether the sound starts on the first tap, or whether the button returns to the play state and the second tap works (the documented fallback). Both are acceptable. A button stuck on loading, or "Audio unavailable" on a verse that played on desktop, is a bug.
@@ -307,7 +307,7 @@ Not yet done on any iPhone or iPad. The player (`lib/audio/player.js`, `app/comp
   - the page lists in `scripts/smoke.mjs`: the fixed pages at about line 160, the list at about line 406, the footer links at about line 422, the expected precache pages at about line 475 and the info-page checks at about line 588;
   - the page table in `README.md`.
 - [ ] `npm run lint`, `npm test`, `npm run build`, `npm run check:precache`, then `npm start -- -p 3100` and `npm run smoke`.
-- [ ] Deploy, open both URLs from a private browser window (publicly reachable, no sign-in), and put the URLs in the production access request email (item 2a).
+- [ ] Deploy, open both URLs from a private browser window (publicly reachable, no sign-in), and put the URLs in the production access request email (item 2a). Deployed 2026-11-28 to https://dua-rakaah.netlify.app; both pages, in English and Bangla, answer 200 with no cookies, and the URLs are in the email. Still to do: open them yourself in a private window.
 
 **Done when:** both pages are live at public URLs, linked from the footer, name the audio hosts and the data the app keeps (with the three wrong statements fixed), and the smoke and precache checks pass.
 
@@ -363,7 +363,7 @@ Fill in as you go.
 | 2d. Basmala decisions | | | |
 | 3a. Partial and near matches decided | | | |
 | 3b. iOS Safari tested (device, iOS version) | | | |
-| 4a. Privacy Policy URL | | | |
-| 4a. Terms of Use URL | | | |
+| 4a. Privacy Policy URL | 2026-11-28 | Live, 200 without sign-in | https://dua-rakaah.netlify.app/privacy-policy , https://dua-rakaah.netlify.app/bn/privacy-policy |
+| 4a. Terms of Use URL | 2026-11-28 | Live, 200 without sign-in | https://dua-rakaah.netlify.app/terms-of-use , https://dua-rakaah.netlify.app/bn/terms-of-use |
 | 4b. Hisn al-Muslim terms | | | |
 | 4b. Hafez review | | | |

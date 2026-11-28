@@ -9,12 +9,21 @@ Covers the About and Privacy Policy pages, in English and Bangla, and what each 
 ### Requirement: About page
 `/about` and `/bn/about` SHALL explain, in the page's language, what the app is for; that prayer times are computed on
 the device and are a guide; how the hadith card changes five times a day with a new set each day; where the duas and
-hadith come from and how they are reviewed; and that support is not being taken right now. Each page SHALL have its own
-title and description in the page's language.
+hadith come from (IRD Foundation's dua collection) and whether they have been reviewed, never claiming a review that
+has not happened; credits for the outside sources the app uses; and that support is not being taken right now. Each
+page SHALL have its own title and description in the page's language.
 
 #### Scenario: English
 - **WHEN** a reader opens `/about`
-- **THEN** the page has sections on the app's purpose, prayer times, the daily hadith, sources, and the paused support
+- **THEN** the page has sections on the app's purpose, prayer times, the daily hadith, sources, credits, and the paused
+  support
+
+#### Scenario: Credits
+- **WHEN** a reader opens `/about` or `/bn/about`
+- **THEN** the credits name Quran Foundation, Hisn al-Muslim, adhan-js (MIT License), GeoNames (Creative Commons
+  Attribution 4.0, which requires this credit), the IANA time zone database and the Tanzil Project (Creative Commons
+  Attribution 3.0)
+- **AND** the sources section names IRD Foundation
 
 #### Scenario: Bangla
 - **WHEN** a reader opens `/bn/about`
