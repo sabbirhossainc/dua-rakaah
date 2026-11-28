@@ -47,6 +47,7 @@ export default function SiteFooter() {
   const info = [
     { href: `${prefix}/about`, label: t(lang, "aboutTitle") },
     { href: `${prefix}/privacy-policy`, label: t(lang, "privacyTitle") },
+    { href: `${prefix}/terms-of-use`, label: t(lang, "termsTitle") },
     { href: `${prefix}/general-feedbacks`, label: t(lang, "feedbackTitle") },
     { href: `${prefix}/account`, label: t(lang, "accountLink") },
   ];

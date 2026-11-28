@@ -88,6 +88,7 @@ Open http://localhost:3000.
 | `/account`, `/bn/account` | Sign-in state and "Delete my data" (deleting needs a connection), linked from the footer and the Settings panel |
 | `/about`, `/bn/about` | What the app is for, how prayer times and the daily hadith work, sources |
 | `/privacy-policy`, `/bn/privacy-policy` | What is kept on the device and the server, and how feedback is delivered |
+| `/terms-of-use`, `/bn/terms-of-use` | The terms of use: content accuracy, recitation credits, acceptable use, changes |
 | `/general-feedbacks`, `/bn/general-feedbacks` | The feedback form, sent by email through Resend (sending needs a connection) |
 | `/support` | A notice that support is not being taken right now. Nothing links to it |
 

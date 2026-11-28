@@ -160,7 +160,7 @@ for (const lang of ["en", "bn"]) {
 }
 
 // ---- the other saved pages have no audio either ----
-for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/general-feedbacks", "/bn/general-feedbacks"]) {
+for (const p of ["/", "/bn", "/support", "/duas", "/bn/duas", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/terms-of-use", "/bn/terms-of-use", "/general-feedbacks", "/bn/general-feedbacks"]) {
   const { body } = await get(p);
   check(`${p}: no <audio>, no ihadis.com, no recording URL`, !body.includes("<audio") && !body.includes("ihadis.com") && !body.includes(".mp3"));
   const quran = p.endsWith("/privacy-policy") ? QURAN_ADDRESS : QURAN_CONTENT;
@@ -407,7 +407,7 @@ check("/duas: the page links to the account page", (await get("/duas")).body.inc
 // ---- the shared frame, on every page (app-navigation and site-shell specs) ----
 const FRAME_PAGES = [
   "/", "/bn", "/duas", "/bn/duas", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize",
-  "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/general-feedbacks",
+  "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/terms-of-use", "/bn/terms-of-use", "/general-feedbacks",
   "/bn/general-feedbacks", "/no-such-page",
   ...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]),
 ];
@@ -423,7 +423,7 @@ for (const p of FRAME_PAGES) {
   check(`${p}: skip link to the main content`, /<a[^>]*href="#main"/.test(html) && /<main[^>]*id="main"/.test(html));
   const footer = /<footer[\s\S]*<\/footer>/.exec(html)?.[0] ?? "";
   const pre = langFromPathname(p) === "bn" ? "/bn" : "";
-  const footerLinks = [pre || "/", `${pre}/duas`, `${pre || "/"}#categories`, `${pre || "/"}#prayer-times`, `${pre}/bookmark`, `${pre}/about`, `${pre}/privacy-policy`, `${pre}/general-feedbacks`, `${pre}/account`];
+  const footerLinks = [pre || "/", `${pre}/duas`, `${pre || "/"}#categories`, `${pre || "/"}#prayer-times`, `${pre}/bookmark`, `${pre}/about`, `${pre}/privacy-policy`, `${pre}/terms-of-use`, `${pre}/general-feedbacks`, `${pre}/account`];
   const missingLinks = footerLinks.filter((href) => !footer.includes(`href="${href}"`));
   check(`${p}: footer with its links in the page language`, footer !== "" && missingLinks.length === 0, missingLinks.join(" "));
   check(`${p}: footer says support is paused, with no link to /support`, footer.includes("data-support-paused") && !footer.includes('href="/support"'));
@@ -476,7 +476,7 @@ for (const [p, text, home, duas] of [
   check("/serwist/sw.js: never cached by the browser", /no-cache/.test(cc) && /no-store/.test(cc), cc);
 
   const entryUrls = [...worker.matchAll(/\{(?:url:"([^"]+)",revision:[^}]+|revision:[^,}]+,url:"([^"]+)")\}/g)].map((m) => m[1] ?? m[2]);
-  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/bn", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/general-feedbacks", "/bn/general-feedbacks"];
+  const expectedPages = [...categories.flatMap((c) => [pathFor(c, "en"), pathFor(c, "bn")]), "/duas", "/bn/duas", "/", "/bn", "/support", "/offline", "/bookmark", "/bn/bookmark", "/memorize", "/bn/memorize", "/account", "/bn/account", "/about", "/bn/about", "/privacy-policy", "/bn/privacy-policy", "/terms-of-use", "/bn/terms-of-use", "/general-feedbacks", "/bn/general-feedbacks"];
   const missing = expectedPages.filter((u) => !entryUrls.includes(u));
   check(`worker precaches all ${expectedPages.length} pages (category pages come from the database)`, missing.length === 0, `missing: ${missing.join(" ")}`);
   check("worker precaches no audio and no /api/ URL", !entryUrls.some((u) => /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|weba)(\?|$)/i.test(u) || u.startsWith("/api/")));
@@ -590,6 +590,7 @@ for (const [p, text, home, duas] of [
 for (const [path, lang, marker] of [
   ["/about", "en", 'data-info-page="about"'], ["/bn/about", "bn", 'data-info-page="about"'],
   ["/privacy-policy", "en", 'data-info-page="privacy"'], ["/bn/privacy-policy", "bn", 'data-info-page="privacy"'],
+  ["/terms-of-use", "en", 'data-info-page="terms"'], ["/bn/terms-of-use", "bn", 'data-info-page="terms"'],
   ["/general-feedbacks", "en", "data-feedback-form"], ["/bn/general-feedbacks", "bn", "data-feedback-form"],
 ]) {
   const r = await get(path);
@@ -602,6 +603,11 @@ for (const [path, lang, marker] of [
     "/privacy-policy: names the audio hosts, Turso and both cookies",
     ["www.hisnmuslim.com", "verses.quran.com", "verses.quran.foundation", "audio.qurancdn.com", "quranicaudio.com", "Turso", "dua_anon"].every((s) => privacy.includes(s)),
   );
+  check("/privacy-policy: links to the Terms of Use", privacy.includes('href="/terms-of-use"'));
+  for (const [path, pre] of [["/terms-of-use", ""], ["/bn/terms-of-use", "/bn"]]) {
+    const terms = (await get(path)).body;
+    check(`${path}: shows when it was updated and links to the Privacy Policy`, terms.includes("data-updated") && terms.includes(`href="${pre}/privacy-policy"`));
+  }
   const support = (await get("/support")).body;
   check("/support: the paused notice with a link home", support.includes("data-support-paused") && /href="\/"/.test(support));
   const send = (body) => fetch(`${BASE}/api/general-feedbacks`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
