@@ -2,7 +2,7 @@
 // The General Feedback form (design D11 of apply-audit-pages-and-feedback). The fields are checked here by the same
 // rules as on the server, problems are shown next to their field, and the result is announced. Offline, nothing is
 // sent and what was typed stays.
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Button from "@/app/components/ui/Button";
 import { FEEDBACK_TYPES, MESSAGE_MAX, NAME_MAX, validateFeedback } from "@/lib/feedback";
 import { t } from "@/lib/i18n";
@@ -36,6 +36,12 @@ export default function FeedbackForm({ lang }) {
   // idle | sending | sent | failed | limited | offline
   const [status, setStatus] = useState("idle");
   const formRef = useRef(null);
+
+  useEffect(() => {
+    if (status !== "sent") return;
+    const timer = setTimeout(() => setStatus("idle"), 4000);
+    return () => clearTimeout(timer);
+  }, [status]);
 
   const set = (name) => (event) => setValues((v) => ({ ...v, [name]: event.target.value }));
   const describe = (name) => (errors[name] ? { "aria-invalid": true, "aria-describedby": `${ids[name]}-error` } : {});
@@ -75,7 +81,7 @@ export default function FeedbackForm({ lang }) {
   const problem = { failed: "feedbackFailed", limited: "feedbackTooMany", offline: "feedbackOffline" }[status];
   const sending = status === "sending";
   return (
-    <form ref={formRef} noValidate onSubmit={submit} className="flex max-w-[640px] flex-col gap-5" data-feedback-form>
+    <form ref={formRef} noValidate onSubmit={submit} className="flex w-full flex-col gap-5" data-feedback-form>
       <Field id={ids.name} label={t(lang, "feedbackName")} error={errors.name && t(lang, errors.name)}>
         <input id={ids.name} name="name" autoComplete="name" maxLength={NAME_MAX} value={values.name} onChange={set("name")} className={FIELD} {...describe("name")} />
       </Field>
@@ -104,14 +110,19 @@ export default function FeedbackForm({ lang }) {
           <input name="website" tabIndex={-1} autoComplete="off" value={values.website} onChange={set("website")} />
         </label>
       </div>
-      <div>
+      <div className="flex justify-center">
         <Button type="submit" disabled={sending}>
           {t(lang, sending ? "feedbackSending" : "feedbackSend")}
         </Button>
       </div>
-      <p role="status" className="text-ui font-semibold text-ink empty:hidden" data-feedback-sent>
-        {status === "sent" ? t(lang, "feedbackSent") : ""}
-      </p>
+      {/* The thank-you is a toast at the foot of the screen that leaves on its own. */}
+      <div aria-live="polite" role="status" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+        {status === "sent" && (
+          <p className="pointer-events-auto rounded-tile bg-ink px-5 py-3 text-center text-ui font-semibold text-surface shadow-lg" data-feedback-sent>
+            {t(lang, "feedbackSent")}
+          </p>
+        )}
+      </div>
       <p role="alert" className="text-ui font-semibold text-danger empty:hidden" data-feedback-error>
         {problem ? t(lang, problem) : ""}
       </p>

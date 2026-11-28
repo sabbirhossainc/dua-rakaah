@@ -8,9 +8,9 @@ import { t } from "@/lib/i18n";
 export default function FeedbackPage({ lang }) {
   return (
     <div lang={lang} data-feedback-page>
-      <PageIntro title={t(lang, "feedbackTitle")} lead={t(lang, "feedbackLead")} />
+      <PageIntro title={t(lang, "feedbackTitle")} lead={t(lang, "feedbackLead")} centered />
       <Section>
-        <Card className="max-w-[760px]">
+        <Card className="mx-auto max-w-[640px]">
           <FeedbackForm lang={lang} />
         </Card>
       </Section>
