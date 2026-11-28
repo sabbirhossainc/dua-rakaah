@@ -6,6 +6,10 @@ const VARIANTS = {
   // A tint with a border that stands out on any card: for badges on dua cards.
   outline: "bg-tint text-primary border border-edge px-3 py-1",
   gold: "bg-gold text-on-gold px-3 py-1",
+  // A solid fill that stands out on any tinted card.
+  primary: "bg-primary text-on-primary px-3 py-1",
+  // Colored by the surrounding .dua-card-* family.
+  feature: "bg-(--dc-badge) text-(--dc-on-badge) border border-(--dc-border) px-3 py-1",
   sand: "bg-sand text-ink px-3 py-1",
   // An icon and text, with no fill.
   text: "text-primary",

@@ -40,7 +40,8 @@
   --color-emerald: #0e3b33;
   --color-on-emerald: #fbf8f2;
   /* The star lattice behind the home page (design D9). */
-  --color-pattern: rgb(14 59 51 / 0.07);
+  --color-pattern: rgb(14 59 51 / 0.035);
+  --color-page-muted: #f4f1ea;
 
   /* Shape and depth. Pills and circles use rounded-full. */
   --radius-tile: 14px;
@@ -194,7 +195,8 @@
   --color-danger: #f0a898;
   --color-emerald: #06201b;
   --color-on-emerald: #f4ede0;
-  --color-pattern: rgb(201 163 78 / 0.07);
+  --color-pattern: rgb(201 163 78 / 0.035);
+  --color-page-muted: #0b2622;
   color-scheme: dark;
 }
 
@@ -643,4 +645,38 @@ html:has(.sheet:modal) {
   textarea::placeholder {
     color: var(--color-muted);
   }
+}
+
+/* "Duas for today" feature cards: each card is one hue family. The border is a step darker than the background, the
+   badge a step stronger, and the call to action the deepest shade, with text at 4.5:1 or more on each fill. */
+.dua-card-green { --dc-bg: #e8f1ec; --dc-border: #b9d4c6; --dc-badge: #cfe3d8; --dc-on-badge: #0e3b33; --dc-cta: #0e3b33; --dc-on-cta: #fbf8f2; }
+.dua-card-gold  { --dc-bg: #f7eeda; --dc-border: #e3cf9f; --dc-badge: #efdcae; --dc-on-badge: #5c4310; --dc-cta: #7a5b12; --dc-on-cta: #fffaf0; }
+.dua-card-clay  { --dc-bg: #f6e9e2; --dc-border: #e2c3b3; --dc-badge: #eed3c5; --dc-on-badge: #6b2f1a; --dc-cta: #8a3f25; --dc-on-cta: #fff8f4; }
+:root[data-theme="dark"] .dua-card-green { --dc-bg: #123f37; --dc-border: #2a6457; --dc-badge: #1d5a4d; --dc-on-badge: #d6ebe1; --dc-cta: #8fc9b0; --dc-on-cta: #0a2b25; }
+:root[data-theme="dark"] .dua-card-gold  { --dc-bg: #2b2a17; --dc-border: #5a4d22; --dc-badge: #4a3f1a; --dc-on-badge: #f0d999; --dc-cta: #c9a34e; --dc-on-cta: #0a2b25; }
+:root[data-theme="dark"] .dua-card-clay  { --dc-bg: #3a2219; --dc-border: #6b3d2c; --dc-badge: #5a3224; --dc-on-badge: #f3c9b6; --dc-cta: #e09a7b; --dc-on-cta: #2a120a; }
+.dua-card-green, .dua-card-gold, .dua-card-clay { background-color: var(--dc-bg); border-color: var(--dc-border); }
+
+/* The home page sits on a muted tone, under the faint lattice. */
+[data-home]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-color: var(--color-page-muted);
+}
+
+/* Dark theme: the current prayer's box takes the band's ink (white), like the upcoming ones, with a stronger border
+   and fill so it still stands out. */
+:root[data-theme="dark"] [data-home-card="times"] li[data-state="current"] {
+  border-color: currentColor;
+  background-color: color-mix(in srgb, currentColor 20%, transparent);
+  color: inherit;
+  border-width: 2px;
+}
+:root[data-theme="dark"] [data-home-card="times"] li[data-state="current"] [data-now] {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  color: #0a2b25;
 }

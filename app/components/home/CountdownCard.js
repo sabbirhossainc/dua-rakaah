@@ -47,7 +47,8 @@ export default function CountdownCard({ lang, times, waqt, placeKey }) {
       ) : (
         <>
           {/* The ring and the track take the band's ink, so they stand out in every period. */}
-          <div className="relative size-32">
+          <div className="flex items-center gap-4">
+          <div className="relative size-32 shrink-0">
             <svg viewBox="0 0 120 120" aria-hidden="true" className="h-full w-full -rotate-90">
               <circle cx="60" cy="60" r={RADIUS} fill="none" stroke="currentColor" strokeOpacity="0.2" strokeWidth="8" />
               {waqt && (
@@ -68,17 +69,14 @@ export default function CountdownCard({ lang, times, waqt, placeKey }) {
               {waqt?.current && prayerName(waqt.current, lang)}
             </p>
           </div>
-          {waqt ? (
-            <>
-              <p aria-hidden="true" className="text-countdown numeric whitespace-nowrap py-1 [&:lang(bn)]:font-semibold" data-time-left>
-                {formatDuration(waqt.remainingMs, lang)}
-              </p>
-              <p aria-hidden="true" className="text-ui">
-                {fmt(lang, "countdownUntil", { name: prayerName(waqt.next, lang) })}
-              </p>
-            </>
-          ) : (
-            <p className="text-ui">{t(lang, "homeLoading")}</p>
+            <p aria-hidden={waqt ? "true" : undefined} className="text-ui capitalize">
+              {waqt ? fmt(lang, "countdownUntil", { name: prayerName(waqt.next, lang) }) : t(lang, "homeLoading")}
+            </p>
+          </div>
+          {waqt && (
+            <p aria-hidden="true" className="text-countdown numeric whitespace-nowrap py-1 [&:lang(bn)]:font-semibold" data-time-left>
+              {formatDuration(waqt.remainingMs, lang)}
+            </p>
           )}
           <p className="sr-only" aria-live="off" data-countdown-sentence>
             {waqt && sentence(waqt, lang)}

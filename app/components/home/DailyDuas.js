@@ -9,11 +9,11 @@ import Tag from "@/app/components/ui/Tag";
 import { DUAS_SHOWN, dayIndex, takeFrom } from "@/lib/home/picks";
 import { t } from "@/lib/i18n";
 
-// The feature cards take these in turn, with a tag that stands out on each.
+// The feature cards take these color families in turn (see globals.css).
 const CARDS = [
-  { variant: "tint", tag: "sand" },
-  { variant: "gold-tint", tag: "tint" },
-  { variant: "sand", tag: "tint" },
+  "dua-card-green",
+  "dua-card-gold",
+  "dua-card-clay",
 ];
 
 export default function DailyDuas({ lang, duas, lists }) {
@@ -31,24 +31,27 @@ export default function DailyDuas({ lang, duas, lists }) {
         return (
           <li key={dua.id} hidden={!shown.includes(dua)} data-home-dua={dua.id} className="min-w-0 not-[[hidden]]:flex">
             <Card
-              variant={look.variant}
-              className="w-full"
-              tag={<Tag variant={look.tag}>{dua.category}</Tag>}
+              variant="feature"
+              className={`w-full ${look}`}
+              tag={<Tag variant="feature">{dua.category}</Tag>}
               art={<Ornament kind="star" size={64} />}
               action={
-                <Button variant="outline" href={dua.href} aria-describedby={titleId}>
+                <Button variant="feature" href={dua.href} aria-describedby={titleId}>
                   {t(lang, "readDua")}
                 </Button>
               }
             >
-              <h3 id={titleId} className="font-heading text-card-title text-ink">
+              <h3 id={titleId} className="line-clamp-2 min-h-[2lh] font-heading text-card-title text-ink">
                 {dua.title}
               </h3>
-              {dua.arabic.map((arabic, part) => (
-                <p key={part} lang="ar" dir="rtl" className="mt-3 text-start text-arabic whitespace-pre-line text-ink">
-                  {arabic}
-                </p>
-              ))}
+              {/* A fixed height for the Arabic, so every card is the same height; longer duas fade out. */}
+              <div className="mt-3 h-40 overflow-hidden mask-b-from-60%">
+                {dua.arabic.map((arabic, part) => (
+                  <p key={part} lang="ar" dir="rtl" className="mt-3 first:mt-0 text-start text-arabic whitespace-pre-line text-ink">
+                    {arabic}
+                  </p>
+                ))}
+              </div>
             </Card>
           </li>
         );

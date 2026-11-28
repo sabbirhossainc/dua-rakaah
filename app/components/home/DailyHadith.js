@@ -9,7 +9,7 @@ export default function DailyHadith({ lang, quotes, buildDate }) {
   const slot = useHadithSlot() ?? { date: buildDate, period: "dhuhr" };
   const index = quotes.length ? hadithIndex(slot.date, slot.period, quotes.length) : 0;
   return quotes.map((quote, i) => (
-    <figure key={quote.key} hidden={i !== index} data-home-quote={quote.key} className="max-w-reading">
+    <figure key={quote.key} hidden={i !== index} data-home-quote={quote.key}>
       <blockquote className="font-heading text-card-title whitespace-pre-line text-ink italic">{quote.text}</blockquote>
       <figcaption className="mt-3 text-label whitespace-pre-line text-gold-text">
         {t(lang, "reference")}: {quote.reference}

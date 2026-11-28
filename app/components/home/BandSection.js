@@ -5,7 +5,7 @@ import { useId } from "react";
 export default function BandSection({ title, className = "", children, ...props }) {
   const titleId = useId();
   return (
-    <section aria-labelledby={titleId} className={`flex min-w-0 flex-col items-center gap-2 text-center ${className}`} {...props}>
+    <section aria-labelledby={titleId} className={`flex min-w-0 flex-col items-center justify-center gap-2 text-center ${className}`} {...props}>
       <h2 id={titleId} className="sr-only">
         {title}
       </h2>

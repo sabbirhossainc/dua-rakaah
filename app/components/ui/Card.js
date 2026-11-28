@@ -9,6 +9,8 @@ const VARIANTS = {
   "gold-tint": "bg-gold-tint",
   // The dark call to action: `on-emerald` switches text, buttons and the focus ring to colors that read on emerald.
   emerald: "on-emerald",
+  // Colored by a .dua-card-* family passed in className (background and border set in globals.css).
+  feature: "",
 };
 
 export default function Card({ as: Element = "div", variant = "surface", tag, action, art, className = "", children, ...props }) {

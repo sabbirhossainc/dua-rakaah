@@ -8,6 +8,8 @@ const VARIANTS = {
   outline: "border-ink text-ink hover:bg-tint",
   ghost: "border-transparent text-primary hover:bg-tint",
   danger: "border-danger text-danger hover:bg-danger/10",
+  // Colored by the surrounding .dua-card-* family.
+  feature: "bg-(--dc-cta) text-(--dc-on-cta) border-(--dc-cta) hover:opacity-90",
 };
 
 // 36px, 44px and 52px high. A button with an icon and no text is as wide as it is high. `sm` is the default (design D1
