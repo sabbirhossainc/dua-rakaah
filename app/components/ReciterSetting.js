@@ -39,6 +39,7 @@ export default function ReciterSetting() {
   }
   return (
     <Select
+      icon="reciter"
       label={t(lang, "reciterLegend")}
       value={selectedReciter(values.reciter_id, list.reciters)}
       onChange={(event) => setting("reciter_id", event.target.value).catch(() => {})}

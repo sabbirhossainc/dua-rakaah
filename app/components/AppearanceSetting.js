@@ -8,8 +8,8 @@ import { usePreferences } from "@/lib/local/preferences-store";
 import { setting } from "@/lib/local/client";
 
 const OPTIONS = [
-  ["light", "appearanceLight"],
-  ["dark", "appearanceDark"],
+  ["light", "appearanceLight", "sun"],
+  ["dark", "appearanceDark", "moon"],
 ];
 
 export default function AppearanceSetting() {
@@ -17,11 +17,12 @@ export default function AppearanceSetting() {
   const { values } = usePreferences();
   return (
     <SegmentedControl
+      icon="sun"
       legend={t(lang, "appearanceLegend")}
       name="appearance"
       value={values.theme}
       onChange={(value) => setting("theme", value).catch(() => {})}
-      options={OPTIONS.map(([value, key]) => ({ value, label: t(lang, key) }))}
+      options={OPTIONS.map(([value, key, icon]) => ({ value, icon, label: t(lang, key) }))}
     />
   );
 }

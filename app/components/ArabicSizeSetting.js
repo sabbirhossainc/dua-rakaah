@@ -19,6 +19,7 @@ export default function ArabicSizeSetting() {
   const { values } = usePreferences();
   return (
     <SegmentedControl
+      icon="textSize"
       legend={t(lang, "arabicSizeLegend")}
       name="arabic-size"
       value={values.arabic_font}

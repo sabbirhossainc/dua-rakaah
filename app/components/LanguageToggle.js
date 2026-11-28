@@ -25,6 +25,6 @@ export default function LanguageToggle() {
   }
 
   return (
-    <SegmentedControl legend={t(active, "languageLegend")} name="language" value={active} onChange={select} options={OPTIONS} />
+    <SegmentedControl icon="language" legend={t(active, "languageLegend")} name="language" value={active} onChange={select} options={OPTIONS} />
   );
 }
