@@ -1,0 +1,11 @@
+# Project: dua-rakaah
+# The Netlify project name is not set in this file: choose it when creating the site
+# (Netlify UI, or `netlify sites:create --name dua-rakaah`). It gives the address dua-rakaah.netlify.app.
+
+[build]
+  base = "."
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "24"
