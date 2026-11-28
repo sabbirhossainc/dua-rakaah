@@ -1,6 +1,7 @@
 "use client";
 // Where the category list sits (design D6). The one list is a sticky column from 1280px; below that the same element
 // opens as a sheet from the page intro's "Categories" button, and choosing a category closes it.
+import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
 import Button from "@/app/components/ui/Button";
 import Sheet from "@/app/components/ui/Sheet";
@@ -23,6 +24,8 @@ const isColumn = () => window.matchMedia(COLUMN_QUERY).matches;
 export default function CategoryDrawer({ lang, list, children }) {
   const column = useSyncExternalStore(subscribeColumn, isColumn, () => false);
   const [open, setOpen] = useState(false);
+  // The duas landing page already shows every category as its grid, so it has no column beside it.
+  const landing = /^(\/bn)?\/duas\/?$/.test(usePathname());
 
   // A screen that grew to the column's width while the sheet was open has no sheet any more.
   useEffect(() => {
@@ -42,7 +45,7 @@ export default function CategoryDrawer({ lang, list, children }) {
         title={t(lang, "categories")}
         closeLabel={t(lang, "sheetClose")}
         lang={lang}
-        className="sheet-column"
+        className={landing ? "sheet-column sheet-column-hidden" : "sheet-column"}
         // As a column it is part of the page, not a dialog.
         role={column ? "region" : undefined}
       >

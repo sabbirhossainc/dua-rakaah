@@ -419,8 +419,16 @@ html {
   }
 
   /* No padding of a sheet, no close button; the few pixels keep the focus rings from being clipped. */
+  .sheet.sheet-column:not(:modal) > [data-sheet-head] {
+    padding: 6px 6px 16px;
+  }
+
   .sheet.sheet-column:not(:modal) > [data-sheet-body] {
-    padding: 6px;
+    padding: 0 6px 6px;
+  }
+
+  .sheet.sheet-column-hidden:not(:modal) {
+    display: none;
   }
 
   .sheet.sheet-column:not(:modal) .sheet-close {

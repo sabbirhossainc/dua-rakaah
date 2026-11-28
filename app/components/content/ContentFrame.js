@@ -7,7 +7,10 @@ import CurrentCategory from "@/app/components/content/CurrentCategory";
 
 export default function ContentFrame({ lang, children }) {
   return (
-    <div lang={lang} className="container-page xl:grid xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start xl:gap-cards">
+    <div
+      lang={lang}
+      className="container-page xl:grid xl:grid-cols-[340px_minmax(0,1fr)] xl:has-[.sheet-column-hidden]:grid-cols-1 xl:items-start xl:gap-cards"
+    >
       <CategoryDrawer lang={lang} list={<CategoryList lang={lang} />}>
         <div className="content-column min-w-0">{children}</div>
       </CategoryDrawer>

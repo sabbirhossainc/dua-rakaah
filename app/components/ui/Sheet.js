@@ -47,20 +47,21 @@ export default function Sheet({ open, onClose, title, closeLabel, lang, children
       className={`sheet ${className}`}
       {...props}
     >
-      <div data-sheet-body className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain p-card">
-        <div className="flex items-center justify-between gap-3">
-          <h2 id={titleId} className="font-heading text-card-title text-ink">
-            {title}
-          </h2>
-          <Button
-            variant="ghost"
-            icon="close"
-            aria-label={closeLabel}
-            title={closeLabel}
-            onClick={onClose}
-            className="sheet-close"
-          />
-        </div>
+      <div data-sheet-head className="flex shrink-0 items-center justify-between gap-3 p-card pb-4">
+        <h2 id={titleId} className="font-heading text-card-title text-ink">
+          {title}
+        </h2>
+        <Button
+          variant="ghost"
+          icon="close"
+          aria-label={closeLabel}
+          title={closeLabel}
+          onClick={onClose}
+          className="sheet-close"
+        />
+      </div>
+      {/* Only the content scrolls: the title and close button stay put above it. */}
+      <div data-sheet-body className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-card pt-0">
         {children}
       </div>
     </dialog>
